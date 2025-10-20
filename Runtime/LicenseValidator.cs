@@ -17,6 +17,7 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private TMP_Text _errorText;
         [SerializeField] private Button _validateLicenseButton;
         [SerializeField] private string _apiPostfix = "/license-validation";
+        [SerializeField, Scene] private string _licenseClientScene;
         [SerializeField, Scene] private string _sceneToLoad;
 
         // Private variables.
@@ -25,6 +26,12 @@ namespace UniVRseDashboardIntegration
 
         private void Start()
         {
+            if (!Application.isEditor && XRSettings.enabled)
+            {
+                LoadScene(_licenseClientScene);
+                return;
+            }
+
             // Auto populate the license code.
             if (PlayerPrefs.HasKey(Constants.LICENSE_CODE_KEY))
                 _licenseField.text = PlayerPrefs.GetString(Constants.LICENSE_CODE_KEY);
