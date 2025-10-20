@@ -2,15 +2,11 @@ namespace UniVRseDashboardIntegration
 {
     public class LicenseResponse
     {
-        private string _environment;
+        public string environment;
 
         public LicenseResponse(string environment)
         {
-            _environment = environment;
+            this.environment = environment;
         }
-
-        #region Getters
-        public string Environment { get { return _environment; } }
-        #endregion
     }
 }

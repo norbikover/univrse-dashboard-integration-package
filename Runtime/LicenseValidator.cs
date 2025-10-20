@@ -80,7 +80,7 @@ namespace UniVRseDashboardIntegration
                 PlayerPrefs.SetString(Constants.LICENSE_CODE_KEY, _licenseField.text); // Store the used license code such that we can autopopulate it next time.       
 
                 // Send the locationId and environment constantly and load the correct scene.
-                StartLicenseServer(licenseResponse.Environment.ToEnum<ELicenseEnvironment>());
+                StartLicenseServer(licenseResponse.environment.ToEnum<ELicenseEnvironment>());
                 LoadScene(_sceneToLoad);
             }
             catch (Exception ex)
