@@ -51,6 +51,10 @@ namespace UniVRseDashboardIntegration
                     // Return in case the server has a different version than the client.
                     if (licenseMessage.AppVersion != Application.version) throw new Exception($"A server was found but the versions do not match. Server version: {licenseMessage.AppVersion}; Client version: {Application.version}");
 
+
+                    // Update the license static references environment such that the client can use it too.
+                    LicenseStaticReferences.LicenseEnvironment = licenseMessage.Environment;
+
                     // Store the scene name and load the next scene.
                     LoadScene(_sceneToLoad);
 
