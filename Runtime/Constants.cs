@@ -18,7 +18,7 @@ namespace UniVRseDashboardIntegration
         #endregion
 
         [Header("Dashboard Integration")]
-        [SerializeField] private string _appId = "674eee8c21e14a4fb0683670";
+        [SerializeField] private string _appId;
         [SerializeField] private string _apiEndpoint = "https://xtended.vercel.app/api";
 
         [Header("Values")]

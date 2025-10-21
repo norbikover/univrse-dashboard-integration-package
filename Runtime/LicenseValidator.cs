@@ -102,7 +102,7 @@ namespace UniVRseDashboardIntegration
 
         private void StartLicenseServer(ELicenseEnvironment environment)
         {
-            GameObject _licenseServerObject = new GameObject();
+            GameObject _licenseServerObject = new GameObject("License Server");
             DontDestroyOnLoad(_licenseServerObject);
             LicenseServer licenseServer = _licenseServerObject.AddComponent<LicenseServer>();
             licenseServer.StartBroadcast(environment);
