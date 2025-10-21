@@ -83,10 +83,11 @@ namespace UniVRseDashboardIntegration
                 LicenseResponse licenseResponse = JsonConvert.DeserializeObject<LicenseResponse>(responseJson);
 
                 // Store the used license code.
-                AnalyticsEntryManager.Instance.LicenseCode = _licenseField.text;
+                LicenseStaticReferences.LicenseCode = _licenseField.text;
+                LicenseStaticReferences.LicenseEnvironment = licenseResponse.environment.ToEnum<ELicenseEnvironment>();
                 PlayerPrefs.SetString(Constants.LICENSE_CODE_KEY, _licenseField.text); // Store the used license code such that we can autopopulate it next time.       
 
-                // Send the locationId and environment constantly and load the correct scene.
+                // Send the environment constantly and load the correct scene.
                 StartLicenseServer(licenseResponse.environment.ToEnum<ELicenseEnvironment>());
                 LoadScene(_sceneToLoad);
             }

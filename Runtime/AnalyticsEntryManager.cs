@@ -37,7 +37,6 @@ namespace UniVRseDashboardIntegration
         // You might think we could use the deviceID instead of the networkID, but that is wrong. When a headset would stop the game and start again (while the server stays on), the data collected by the previous play session would be overwritten.
         private Dictionary<int, string> _entriesIDS = new Dictionary<int, string>();
         private DateTime _startTime;
-        private string _licenseCode;
 
         private void Start()
         {
@@ -50,14 +49,14 @@ namespace UniVRseDashboardIntegration
         public async void SendAnalyticsEntryToCloud(string deviceId, float totalTime, Dictionary<string, object> data, int senderNetworkID)
         {
             // Return in case no license code was previously provided (most probably DEV build).
-            if (string.IsNullOrEmpty(_licenseCode))
+            if (string.IsNullOrEmpty(LicenseStaticReferences.LicenseCode))
             {
                 Debug.Log("Cannot push analytics to the cloud without a License Code.");
                 return;
             }
 
             AnalyticsEntry analyticsEntry = new AnalyticsEntry(
-                licenseCode: _licenseCode,
+                licenseCode: LicenseStaticReferences.LicenseCode,
                 deviceId: deviceId,
                 totalTime: totalTime,
                 data: data
@@ -141,9 +140,5 @@ namespace UniVRseDashboardIntegration
                 }
             }
         }
-
-        #region Setters and Getters
-        public string LicenseCode { set { _licenseCode = value; } }
-        #endregion
     }
 }
