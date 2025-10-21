@@ -3,8 +3,6 @@
   "displayName": "UniVRse Dashboard Integration",
   "version": "1.0.0",
   "dependencies": {
-    "com.unity.nuget.newtonsoft-json": "3.2.1",
-    "com.kortex.file-system": "https://github.com/norbikover/file-system-package.git",
-    "com.kortex.http-integration": "https://github.com/norbikover/http-integration-package.git"
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
   }
 }
