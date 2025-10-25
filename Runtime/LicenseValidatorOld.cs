@@ -10,7 +10,7 @@ using HttpIntegration;
 namespace UniVRseDashboardIntegration
 {
 
-    public class LicenseValidator : MonoBehaviour
+    public class LicenseValidatorOld : MonoBehaviour
     {
         [Header("References")]
         [SerializeField] private TMP_InputField _licenseField;
@@ -18,7 +18,6 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private Button _validateLicenseButton;
         [SerializeField] private string _apiPostfix = "/license-validation";
         [SerializeField, Scene] private string _licenseClientScene;
-        [SerializeField, Scene] private string _sceneToLoad;
 
         // Private variables.
         private bool _isCheckingLicense = false;
@@ -58,8 +57,8 @@ namespace UniVRseDashboardIntegration
             if (string.Equals(_licenseField.text, Constants.SECRET_LICENSE))
             {
                 // Start the license server with the DEV environment.
-                StartLicenseServer(ELicenseEnvironment.DEV);
-                LoadScene(_sceneToLoad);
+                StartLicenseServer(Constants.DEFAULT_SCENE_NAME ,ELicenseEnvironment.DEV);
+                LoadScene(Constants.DEFAULT_SCENE_NAME);
                 return;
             }
 
@@ -80,7 +79,7 @@ namespace UniVRseDashboardIntegration
                     serverUrl: Constants.API_ENDPOINT);
 
                 // Deserialize the response JSON into a LicenseResponse object.
-                LicenseResponse licenseResponse = JsonConvert.DeserializeObject<LicenseResponse>(responseJson);
+                LicenseResponseOld licenseResponse = JsonConvert.DeserializeObject<LicenseResponseOld>(responseJson);
 
                 // Store the used license code.
                 LicenseStaticReferences.LicenseCode = _licenseField.text;
@@ -88,8 +87,9 @@ namespace UniVRseDashboardIntegration
                 PlayerPrefs.SetString(Constants.LICENSE_CODE_KEY, _licenseField.text); // Store the used license code such that we can autopopulate it next time.       
 
                 // Send the environment constantly and load the correct scene.
-                StartLicenseServer(licenseResponse.environment.ToEnum<ELicenseEnvironment>());
-                LoadScene(_sceneToLoad);
+                string sceneName = LocationIdSceneNameMapping.Instance.GetSceneNameByLocationId(licenseResponse.locationId);
+                StartLicenseServer(sceneName, licenseResponse.environment.ToEnum<ELicenseEnvironment>());
+                LoadScene(sceneName);
             }
             catch (Exception ex)
             {
@@ -100,12 +100,12 @@ namespace UniVRseDashboardIntegration
             _isCheckingLicense = false;
         }
 
-        private void StartLicenseServer(ELicenseEnvironment environment)
+        private void StartLicenseServer(string sceneName, ELicenseEnvironment environment)
         {
             GameObject _licenseServerObject = new GameObject("License Server");
             DontDestroyOnLoad(_licenseServerObject);
-            LicenseServer licenseServer = _licenseServerObject.AddComponent<LicenseServer>();
-            licenseServer.StartBroadcast(environment);
+            LicenseServerOld licenseServer = _licenseServerObject.AddComponent<LicenseServerOld>();
+            licenseServer.StartBroadcast(sceneName, environment);
         }
 
         private void LoadScene(string sceneName)

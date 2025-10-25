@@ -1,4 +1,5 @@
 using UnityEngine;
+using NaughtyAttributes;
 
 namespace UniVRseDashboardIntegration
 {
@@ -23,6 +24,7 @@ namespace UniVRseDashboardIntegration
 
         [Header("Values")]
         [SerializeField] private int _udpLicensePort = 9876;
+        [SerializeField, Scene] private string _defaultSceneName; // TODO: This will be removed.
         
         [Header("PlayerPrefs Keys")]
         [SerializeField] private string _licenseCodeKey = "LICENSE_CODE";
@@ -34,6 +36,7 @@ namespace UniVRseDashboardIntegration
         public static string APP_ID { get { return Instance._appId; } }
         public static string API_ENDPOINT { get { return Instance._apiEndpoint; } }
         public static int UDP_LICENSE_PORT { get { return Instance._udpLicensePort; } }
+        public static string DEFAULT_SCENE_NAME { get { return Instance._defaultSceneName; } }
         public static string LICENSE_CODE_KEY {get {return Instance._licenseCodeKey;}}
         public static string SECRET_LICENSE {get {return Instance._secretLicense;}}
         #endregion
