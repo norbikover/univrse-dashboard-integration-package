@@ -5,7 +5,7 @@ namespace UniVRseDashboardIntegration
     public enum ELicenseEnvironment
     {
         DEV,
-        ALHPA,
+        ALPHA,
         BETA,
         PROD
     }
