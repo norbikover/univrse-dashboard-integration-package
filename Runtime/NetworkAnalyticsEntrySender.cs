@@ -6,6 +6,20 @@ namespace UniVRseDashboardIntegration
 {
     public class NetworkAnalyticsEntrySender : NetworkBehaviour // This script is responsible for sending the local data from the client to the server.
     {
+        #region Singleton pattern
+
+        private static NetworkAnalyticsEntrySender _instance;
+
+        public static NetworkAnalyticsEntrySender Instance
+        {
+            get
+            {
+                return _instance ?? (_instance = FindAnyObjectByType<NetworkAnalyticsEntrySender>());
+            }
+        }
+
+        #endregion
+
         [Header("Setttings")]
         [SerializeField] private float _sendInterval = 60f;
 
