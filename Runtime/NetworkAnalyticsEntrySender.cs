@@ -66,5 +66,17 @@ namespace UniVRseDashboardIntegration
             // Send the entry's data to the cloud.
             AnalyticsEntryManager.Instance.SendAnalyticsEntryToCloud(deviceId, totalTime, JsonConvert.DeserializeObject<Dictionary<string, object>>(dataJson), (int)sender.identity.netId);
         }
+        
+        [Client]
+        public void ResetEntryID()
+        {
+            CmdResetEntryID();
+        }
+
+        [Command(requiresAuthority = false)]
+        private void CmdResetEntryID(NetworkConnectionToClient sender = null)
+        {
+            AnalyticsEntryManager.Instance.ResetEntryID((int)sender.identity.netId);
+        }
     }
 }
