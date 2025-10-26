@@ -23,18 +23,18 @@ namespace UniVRseDashboardIntegration
             _totalTime = 0f;
 
             // Send an initial entry to the server and then repeatedly send updates to the server.
-            InvokeRepeating(nameof(SendAnalyticsEntryToServer), 0f, _sendInterval);
+            if(_sendInterval > 0) InvokeRepeating(nameof(SendAnalyticsEntryToServer), 0f, _sendInterval);
         }
 
         [ClientCallback]
-        private void Update()
+        protected virtual void Update()
         {
             // Increase the time since start.
             _totalTime += Time.deltaTime;
         }
 
         [ClientCallback]
-        public virtual void SendAnalyticsEntryToServer() // Called externally on the client side (the server might call it too but the [ClientCallback] flag makes sure the server won't push an event).
+        protected virtual void SendAnalyticsEntryToServer() // Called externally on the client side (the server might call it too but the [ClientCallback] flag makes sure the server won't push an event).
         {
             Dictionary<string, object> data = new Dictionary<string, object>();
 
