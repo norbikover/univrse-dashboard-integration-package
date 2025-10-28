@@ -5,7 +5,6 @@ using UnityEngine.SceneManagement;
 using System;
 using Newtonsoft.Json;
 using TMPro;
-using NaughtyAttributes;
 
 namespace UniVRseDashboardIntegration
 {

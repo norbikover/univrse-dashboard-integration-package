@@ -7,9 +7,9 @@ using UnityEngine.XR;
 using UnityEngine.UI;
 using Mirror;
 using HttpIntegration;
+
 namespace UniVRseDashboardIntegration
 {
-
     public class LicenseValidator : MonoBehaviour
     {
         [Header("References")]

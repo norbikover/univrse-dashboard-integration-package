@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace UniVRseDashboardIntegration
 {
     public enum ELicenseEnvironment

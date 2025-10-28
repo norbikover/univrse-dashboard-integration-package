@@ -1,5 +1,3 @@
-using UnityEditor.SearchService;
-
 namespace UniVRseDashboardIntegration
 {
     public class LicenseMessageOld // This is the license message that the server constantly sends to clients.
