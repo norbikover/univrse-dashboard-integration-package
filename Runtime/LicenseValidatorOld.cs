@@ -91,6 +91,8 @@ namespace UniVRseDashboardIntegration
                 // Send the environment constantly and load the correct scene.
                 string sceneName = LocationIdSceneNameMapping.Instance.GetSceneNameByLocationId(licenseResponse.locationId);
                 StartLicenseServer(sceneName, licenseResponse.environment.ToEnum<ELicenseEnvironment>());
+                Debug.Log(sceneName);
+                Debug.Log(_templateScene);
                 LoadScene(string.Equals(sceneName, _templateScene) ? _homeScreenScene : sceneName);
             }
             catch (Exception ex)
