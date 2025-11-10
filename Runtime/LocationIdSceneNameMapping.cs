@@ -39,7 +39,7 @@ namespace UniVRseDashboardIntegration
         public class Map
         {
             [SerializeField] private string _locationId;
-            [SerializeField][Scene] private string _sceneName;
+            [SerializeField, Scene] private string _sceneName;
 
             #region Setters and Getters
             public string LocationId { get { return _locationId; } }
