@@ -18,6 +18,8 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private Button _validateLicenseButton;
         [SerializeField] private string _apiPostfix = "/license-validation";
         [SerializeField, Scene] private string _licenseClientScene;
+        [SerializeField, Scene] private string _templateScene;
+        [SerializeField, Scene] private string _homeScreenScene;
 
         // Private variables.
         private bool _isCheckingLicense = false;
@@ -89,7 +91,7 @@ namespace UniVRseDashboardIntegration
                 // Send the environment constantly and load the correct scene.
                 string sceneName = LocationIdSceneNameMapping.Instance.GetSceneNameByLocationId(licenseResponse.locationId);
                 StartLicenseServer(sceneName, licenseResponse.environment.ToEnum<ELicenseEnvironment>());
-                LoadScene(sceneName);
+                LoadScene(string.Equals(sceneName, _templateScene) ? _homeScreenScene : sceneName);
             }
             catch (Exception ex)
             {
