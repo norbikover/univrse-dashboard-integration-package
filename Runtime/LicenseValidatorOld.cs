@@ -5,8 +5,8 @@ using System;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR;
 using UnityEngine.UI;
-using Mirror;
 using HttpIntegration;
+using NaughtyAttributes;
 
 namespace UniVRseDashboardIntegration
 {
@@ -91,8 +91,6 @@ namespace UniVRseDashboardIntegration
                 // Send the environment constantly and load the correct scene.
                 string sceneName = LocationIdSceneNameMapping.Instance.GetSceneNameByLocationId(licenseResponse.locationId);
                 StartLicenseServer(sceneName, licenseResponse.environment.ToEnum<ELicenseEnvironment>());
-                Debug.Log(sceneName);
-                Debug.Log(_templateScene);
                 LoadScene(string.Equals(sceneName, _templateScene) ? _homeScreenScene : sceneName);
             }
             catch (Exception ex)
