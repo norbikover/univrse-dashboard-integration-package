@@ -79,19 +79,16 @@ namespace UniVRseDashboardIntegration
                     // Disable the canvas.
                     _popupEnabled = false;
                     _canvas.SetActive(false);
-
-                    // Automatically recheck the license again after the given delay.
-                    CancelInvoke(nameof(ValidateLicense));
-                    Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
                 }
+                
+                // Automatically recheck the license again after the given delay.
+                CancelInvoke(nameof(ValidateLicense));
+                Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
             }
             catch (Exception ex) // In case of an error.
             {
                 // Update the error text.
                 _errorText.text = ex.Message;
-
-                // Make sure the auto license validation is stopped.
-                CancelInvoke(nameof(ValidateLicense));
 
                 // Enable the popup.
                 if(!_popupEnabled)
@@ -100,6 +97,9 @@ namespace UniVRseDashboardIntegration
                     _canvas.SetActive(true);
                     _quitTimer = _quitTimeDelay;
                 }
+
+                // Make sure the auto license validation is stopped.
+                CancelInvoke(nameof(ValidateLicense));
             }
 
             _isCheckingLicense = false;
