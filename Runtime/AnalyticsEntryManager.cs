@@ -87,7 +87,7 @@ namespace UniVRseDashboardIntegration
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"Failed to send entry to the cloud. Storing the document locally. Error: {ex.Message}");
+                Debug.Log($"Failed to send entry to the cloud. Storing the document locally. Error: {ex.Message}");
 
                 // Check if the sender already has an entry in the database. If it does we will be able to update it later, otherwise we will later push the error entry as a new one.
                 string entryCloudID = _entriesIDS.ContainsKey(senderNetworkID) ? _entriesIDS[senderNetworkID] : "";
@@ -137,7 +137,7 @@ namespace UniVRseDashboardIntegration
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"Failed to send entry to the cloud. Document is already stored locally. Error: {ex.Message}");
+                    Debug.Log($"Failed to send entry to the cloud. Document is already stored locally. Error: {ex.Message}");
                 }
             }
         }
