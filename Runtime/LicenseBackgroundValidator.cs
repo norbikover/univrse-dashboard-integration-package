@@ -39,6 +39,11 @@ namespace UniVRseDashboardIntegration
 
         private void Start()
         {
+            // Reset the error text and disable the canvas.
+            _errorText.text = "";
+            _canvas.SetActive(false);
+
+            // Make sure the buttons are hooked to the correct functions.
             _quitButton.onClick.AddListener(OnQuitButtonPressed);
             _retryButton.onClick.AddListener(OnRetryButtonPressed);
         }
@@ -47,7 +52,7 @@ namespace UniVRseDashboardIntegration
         {
             _currentLicense = license;
             CancelInvoke(nameof(ValidateLicense));
-            InvokeRepeating(nameof(ValidateLicense), 0f, _licenseRepeatingInterval);
+            Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
         }
 
         private async void ValidateLicense()
@@ -68,11 +73,16 @@ namespace UniVRseDashboardIntegration
                     data: licenseRequest,
                     serverUrl: Constants.API_ENDPOINT);
 
-                // In case of success disable the popup.
+                // In case of success.
                 if(_popupEnabled)
-                {
+                {   
+                    // Disable the canvas.
                     _popupEnabled = false;
                     _canvas.SetActive(false);
+
+                    // Automatically recheck the license again after the given delay.
+                    CancelInvoke(nameof(ValidateLicense));
+                    Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
                 }
             }
             catch (Exception ex) // In case of an error.
@@ -80,12 +90,15 @@ namespace UniVRseDashboardIntegration
                 // Update the error text.
                 _errorText.text = ex.Message;
 
+                // Make sure the auto license validation is stopped.
+                CancelInvoke(nameof(ValidateLicense));
+
                 // Enable the popup.
                 if(!_popupEnabled)
                 {
                     _popupEnabled = true;
-                     _canvas.SetActive(true);
-                     _quitTimer = _quitTimeDelay;
+                    _canvas.SetActive(true);
+                    _quitTimer = _quitTimeDelay;
                 }
             }
 
