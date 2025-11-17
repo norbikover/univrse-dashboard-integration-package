@@ -16,7 +16,6 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private TMP_InputField _licenseField;
         [SerializeField] private TMP_Text _errorText;
         [SerializeField] private Button _validateLicenseButton;
-        [SerializeField] private string _apiPostfix = "/license-validation";
         [SerializeField, Scene] private string _licenseClientScene;
         [SerializeField, Scene] private string _templateScene;
         [SerializeField, Scene] private string _homeScreenScene;
@@ -75,7 +74,7 @@ namespace UniVRseDashboardIntegration
 
                 // Perform the license validation request.
                 string responseJson = await HttpService.Instance.SendRequestAsync(
-                    postfix: _apiPostfix,
+                    postfix: Constants.LICENSE_VALIDATION_POSTFIX,
                     method: HttpMethod.POST,
                     data: licenseRequest,
                     serverUrl: Constants.API_ENDPOINT);

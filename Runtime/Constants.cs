@@ -21,6 +21,7 @@ namespace UniVRseDashboardIntegration
         [Header("Dashboard Integration")]
         [SerializeField] private string _appId;
         [SerializeField] private string _apiEndpoint = "https://xtended.vercel.app/api";
+        [SerializeField] private string _licenseValidationPostfix = "/license-validation";
 
         [Header("Values")]
         [SerializeField] private int _udpLicensePort = 9876;
@@ -35,6 +36,7 @@ namespace UniVRseDashboardIntegration
         #region Getters
         public static string APP_ID { get { return Instance._appId; } }
         public static string API_ENDPOINT { get { return Instance._apiEndpoint; } }
+        public static string LICENSE_VALIDATION_POSTFIX { get { return Instance._licenseValidationPostfix; } }
         public static int UDP_LICENSE_PORT { get { return Instance._udpLicensePort; } }
         public static string DEFAULT_SCENE_NAME { get { return Instance._defaultSceneName; } }
         public static string LICENSE_CODE_KEY {get {return Instance._licenseCodeKey;}}

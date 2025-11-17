@@ -27,7 +27,6 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private TMP_Text _quitTimerText;
         [SerializeField] private Button _quitButton;
         [SerializeField] private Button _retryButton;
-        [SerializeField] private string _apiPostfix = "/license-validation";
         [SerializeField] private float _licenseRepeatingInterval = 60f;
         [SerializeField] private float _quitTimeDelay = 60f;
 
@@ -64,7 +63,7 @@ namespace UniVRseDashboardIntegration
 
                 // Perform the license validation request.
                 string responseJson = await HttpService.Instance.SendRequestAsync(
-                    postfix: _apiPostfix,
+                    postfix: Constants.LICENSE_VALIDATION_POSTFIX,
                     method: HttpMethod.POST,
                     data: licenseRequest,
                     serverUrl: Constants.API_ENDPOINT);
