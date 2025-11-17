@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System;
 using HttpIntegration;
+using Utilities;
 
 namespace UniVRseDashboardIntegration
 {
@@ -57,7 +58,7 @@ namespace UniVRseDashboardIntegration
 
             AnalyticsEntry analyticsEntry = new AnalyticsEntry(
                 licenseCode: LicenseStaticReferences.LicenseCode,
-                deviceId: deviceId,
+                deviceId: DeviceMappingSystem.Instance.GetDeviceName(deviceId),
                 totalTime: totalTime,
                 data: data
             );
