@@ -56,9 +56,11 @@ namespace UniVRseDashboardIntegration
                 return;
             }
 
+            string deviceName = DeviceMappingSystem.Instance.GetDeviceName(deviceId);
+
             AnalyticsEntry analyticsEntry = new AnalyticsEntry(
                 licenseCode: LicenseStaticReferences.LicenseCode,
-                deviceId: DeviceMappingSystem.Instance.GetDeviceName(deviceId),
+                deviceId: !string.IsNullOrEmpty(deviceName) ? deviceName : deviceId,
                 totalTime: totalTime,
                 data: data
             );
