@@ -22,7 +22,7 @@ namespace UniVRseDashboardIntegration
         #endregion
 
         [Header("References")]
-        [SerializeField] private GameObject _ui;
+        [SerializeField] private GameObject _canvas;
         [SerializeField] private TMP_Text _errorText;
         [SerializeField] private TMP_Text _quitTimerText;
         [SerializeField] private Button _quitButton;
@@ -73,7 +73,7 @@ namespace UniVRseDashboardIntegration
                 if(_popupEnabled)
                 {
                     _popupEnabled = false;
-                    _ui.SetActive(false);
+                    _canvas.SetActive(false);
                 }
             }
             catch (Exception ex) // In case of an error.
@@ -85,7 +85,7 @@ namespace UniVRseDashboardIntegration
                 if(!_popupEnabled)
                 {
                     _popupEnabled = true;
-                     _ui.SetActive(true);
+                     _canvas.SetActive(true);
                      _quitTimer = _quitTimeDelay;
                 }
             }
