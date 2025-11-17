@@ -1,0 +1,128 @@
+using UnityEngine;
+using TMPro;
+using System;
+using UnityEngine.UI;
+using HttpIntegration;
+
+namespace UniVRseDashboardIntegration
+{
+    public class LicenseBackgroundValidator : MonoBehaviour
+    {
+        #region Singleton Pattern
+
+        private static LicenseBackgroundValidator _instance;
+        public static LicenseBackgroundValidator Instance
+        {
+            get
+            {
+                return _instance ?? (_instance = FindAnyObjectByType<LicenseBackgroundValidator>());
+            }
+        }
+
+        #endregion
+
+        [Header("References")]
+        [SerializeField] private GameObject _ui;
+        [SerializeField] private TMP_Text _errorText;
+        [SerializeField] private TMP_Text _quitTimerText;
+        [SerializeField] private Button _quitButton;
+        [SerializeField] private Button _retryButton;
+        [SerializeField] private string _apiPostfix = "/license-validation";
+        [SerializeField] private float _licenseRepeatingInterval = 60f;
+        [SerializeField] private float _quitTimeDelay = 60f;
+
+        // Private variables.
+        private bool _popupEnabled = false;
+        private bool _isCheckingLicense = false;
+        private bool _isQuitting = false;
+        private string _currentLicense = string.Empty;
+        private float _quitTimer = 0f;
+
+        private void Start()
+        {
+            _quitButton.onClick.AddListener(OnQuitButtonPressed);
+            _retryButton.onClick.AddListener(OnRetryButtonPressed);
+        }
+
+        public void StartBackgroundLicenseChecking(string license)
+        {
+            _currentLicense = license;
+            CancelInvoke(nameof(ValidateLicense));
+            InvokeRepeating(nameof(ValidateLicense), 0f, _licenseRepeatingInterval);
+        }
+
+        private async void ValidateLicense()
+        {
+            if (_isCheckingLicense) return;
+
+            _isCheckingLicense = true;
+
+            try
+            {
+                // Build the query string from the LicenseRequest object.
+                LicenseRequest licenseRequest = new LicenseRequest(_currentLicense, Constants.APP_ID, Application.version);
+
+                // Perform the license validation request.
+                string responseJson = await HttpService.Instance.SendRequestAsync(
+                    postfix: _apiPostfix,
+                    method: HttpMethod.POST,
+                    data: licenseRequest,
+                    serverUrl: Constants.API_ENDPOINT);
+
+                // In case of success disable the popup.
+                if(_popupEnabled)
+                {
+                    _popupEnabled = false;
+                    _ui.SetActive(false);
+                }
+            }
+            catch (Exception ex) // In case of an error.
+            {
+                // Update the error text.
+                _errorText.text = ex.Message;
+
+                // Enable the popup.
+                if(!_popupEnabled)
+                {
+                    _popupEnabled = true;
+                     _ui.SetActive(true);
+                     _quitTimer = _quitTimeDelay;
+                }
+            }
+
+            _isCheckingLicense = false;
+        }
+
+        private void Update()
+        {
+            if (_popupEnabled)
+            {
+                _quitTimer -= Time.deltaTime;
+                _quitTimerText.text = $"Application will close in {(int)_quitTimer} seconds";
+                if (_quitTimer <= 0 && !_isQuitting)
+                {
+                    _isQuitting = true; 
+                    Application.Quit();
+                }
+            }
+        }
+
+        private void OnQuitButtonPressed()
+        {
+            if (_isQuitting) return;
+            _isQuitting = true;
+            Application.Quit();
+        }
+
+        private void OnRetryButtonPressed()
+        {
+            ValidateLicense();
+        }
+
+        private void OnDestroy()
+        {
+            if(_quitButton != null) _quitButton.onClick.RemoveListener(OnQuitButtonPressed);
+            if(_retryButton != null) _retryButton.onClick.RemoveListener(OnRetryButtonPressed);
+        }
+    }
+}

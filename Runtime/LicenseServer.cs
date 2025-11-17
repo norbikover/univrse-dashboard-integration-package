@@ -1,57 +1,120 @@
-using System.Net;
-using System.Net.Sockets;
-using System.Text;
 using UnityEngine;
-using System.Threading.Tasks;
+using TMPro;
 using Newtonsoft.Json;
+using System;
+using UnityEngine.SceneManagement;
+using UnityEngine.XR;
+using UnityEngine.UI;
+using Mirror;
+using HttpIntegration;
 
 namespace UniVRseDashboardIntegration
 {
     public class LicenseServer : MonoBehaviour
     {
-        [Header("Settings")]
-        [SerializeField] private float _sendInterval = 2f;
-
-        [Header("Debug")]
-        [SerializeField] private bool _debugLog = true;
+        [Header("References")]
+        [SerializeField] private TMP_InputField _licenseField;
+        [SerializeField] private TMP_Text _errorText;
+        [SerializeField] private Button _validateLicenseButton;
+        [SerializeField] private string _apiPostfix = "/license-validation";
+        [SerializeField, Scene] private string _licenseClientScene;
+        [SerializeField, Scene] private string _sceneToLoad;
 
         // Private variables.
-        private UdpClient _udpServer;
+        private bool _isCheckingLicense = false;
+        private bool _loadingScene = false;
 
-        public async void StartBroadcast(ELicenseEnvironment environment)
+        private void Start()
         {
-            if (_udpServer != null) return;
-
-            // Initialize the udp server.
-            _udpServer = new UdpClient { EnableBroadcast = true };
-
-            // Initialize the endpoint.
-            IPEndPoint endpoint = new IPEndPoint(IPAddress.Broadcast, Constants.UDP_LICENSE_PORT);
-
-            // Initialize the message that will be sent over the network.
-            string json = JsonConvert.SerializeObject(new LicenseMessage(environment, Application.version));
-            byte[] data = Encoding.UTF8.GetBytes(json);
-
-            // Keep on sending data.
-            while (true)
+            if (!Application.isEditor && XRSettings.enabled)
             {
-                try
-                {
-                    await _udpServer?.SendAsync(data, data.Length, endpoint);
-                }
-                catch (SocketException ex)
-                {
-                    if (_debugLog)
-                        Debug.Log($"Broadcast error: {ex.Message}");
-                }
-
-                await Task.Delay((int)(_sendInterval * 1000));
+                LoadScene(_licenseClientScene);
+                return;
             }
+
+            // Auto populate the license code.
+            if (PlayerPrefs.HasKey(Constants.LICENSE_CODE_KEY))
+                _licenseField.text = PlayerPrefs.GetString(Constants.LICENSE_CODE_KEY);
+
+            // Reset the error text.
+            _errorText.text = "";
+
+            // Subscribe to the validate button on click event.
+            _validateLicenseButton.onClick.AddListener(OnValidateLicenceClicked);
         }
 
-        private void OnApplicationQuit()
+        private void OnDestroy()
         {
-            _udpServer?.Close();
+            // Unsubscribe from the validate button on click event.
+            if(_validateLicenseButton != null) _validateLicenseButton.onClick.RemoveListener(OnValidateLicenceClicked);
+        }
+
+        public async void OnValidateLicenceClicked()
+        {
+            // Return in case there is an ongoing request.
+            if (_isCheckingLicense || _loadingScene) return;
+
+            // Check for the SECRET_LICENSE.
+            if (string.Equals(_licenseField.text, Constants.SECRET_LICENSE))
+            {
+                // Start the license server with the DEV environment.
+                StartLicenseBeacon(ELicenseEnvironment.DEV);
+                LoadScene(_sceneToLoad);
+                return;
+            }
+
+            // Set the checking license to true and reset the error text.
+            _isCheckingLicense = true;
+            _errorText.text = "";
+
+            try
+            {
+                // Build the query string from the LicenseRequest object.
+                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, Application.version);
+
+                // Perform the license validation request.
+                string responseJson = await HttpService.Instance.SendRequestAsync(
+                    postfix: _apiPostfix,
+                    method: HttpMethod.POST,
+                    data: licenseRequest,
+                    serverUrl: Constants.API_ENDPOINT);
+
+                // Deserialize the response JSON into a LicenseResponse object.
+                LicenseResponse licenseResponse = JsonConvert.DeserializeObject<LicenseResponse>(responseJson);
+
+                // Store the used license code.
+                LicenseStaticReferences.LicenseCode = _licenseField.text;
+                LicenseStaticReferences.LicenseEnvironment = licenseResponse.environment.ToEnum<ELicenseEnvironment>();
+                PlayerPrefs.SetString(Constants.LICENSE_CODE_KEY, _licenseField.text); // Store the used license code such that we can autopopulate it next time.       
+
+                // Send the environment constantly and load the correct scene.
+                StartLicenseBeacon(licenseResponse.environment.ToEnum<ELicenseEnvironment>());
+                LicenseBackgroundValidator.Instance.StartBackgroundLicenseChecking(_licenseField.text);
+                LoadScene(_sceneToLoad);
+            }
+            catch (Exception ex)
+            {
+                _errorText.text = ex.Message;
+            }
+
+            // Set the checking license variable back to false in order to allow other requests.
+            _isCheckingLicense = false;
+        }
+
+        private void StartLicenseBeacon(ELicenseEnvironment environment)
+        {
+            GameObject _licenseServerObject = new GameObject("License Beacon");
+            DontDestroyOnLoad(_licenseServerObject);
+            LicenseBeacon licenseServer = _licenseServerObject.AddComponent<LicenseBeacon>();
+            licenseServer.StartBroadcast(environment);
+        }
+
+        private void LoadScene(string sceneName)
+        {
+            if (_loadingScene) return;
+
+            _loadingScene = true;
+            SceneManager.LoadSceneAsync(sceneName);
         }
     }
 }
