@@ -27,7 +27,7 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private TMP_Text _quitTimerText;
         [SerializeField] private Button _quitButton;
         [SerializeField] private Button _retryButton;
-        [SerializeField] private float _licenseRepeatingInterval = 60f;
+        [SerializeField] private float _licenseRepeatingInterval = 120f;
         [SerializeField] private float _quitTimeDelay = 60f;
 
         // Private variables.
