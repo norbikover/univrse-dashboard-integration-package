@@ -60,6 +60,7 @@ namespace UniVRseDashboardIntegration
             if (_isCheckingLicense) return;
 
             _isCheckingLicense = true;
+            _errorText.text = "";
 
             try
             {
