@@ -63,7 +63,7 @@ namespace UniVRseDashboardIntegration
                     LicenseMessageOld licenseMessage = new LicenseMessageOld(Constants.DEFAULT_SCENE_NAME, ELicenseEnvironment.DEV, _appVersion);
                     return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
                 });
-                LoadScene(Constants.DEFAULT_SCENE_NAME);
+                LoadScene(_homeScreenScene);
                 return;
             }
 
