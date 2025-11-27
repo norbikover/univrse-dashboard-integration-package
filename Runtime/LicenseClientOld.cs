@@ -28,7 +28,6 @@ namespace UniVRseDashboardIntegration
 
         private async void OnServerFound(string ip)
         {
-            LANDiscovery.Instance.StopActiveDiscovery();
             try
             {
                 string licenseJson = await HttpService.Instance.SendRequestAsync(
@@ -46,6 +45,7 @@ namespace UniVRseDashboardIntegration
                 LicenseStaticReferences.LicenseEnvironment = licenseMessage.Environment;
 
                 // Store the scene name and load the next scene.
+                LANDiscovery.Instance.StopActiveDiscovery();
                 LoadScene(licenseMessage.SceneName);
             }
             catch (Exception ex)
