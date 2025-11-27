@@ -23,6 +23,7 @@ namespace UniVRseDashboardIntegration
         // Private variables.
         private bool _isCheckingLicense = false;
         private bool _loadingScene = false;
+        private string _appVersion = string.Empty;
 
         private void Start()
         {
@@ -31,6 +32,8 @@ namespace UniVRseDashboardIntegration
                 LoadScene(_licenseClientScene);
                 return;
             }
+
+            _appVersion = Application.version;
 
             // Auto populate the license code.
             if (PlayerPrefs.HasKey(Constants.LICENSE_CODE_KEY))
@@ -56,7 +59,7 @@ namespace UniVRseDashboardIntegration
                 HttpServer.Instance.StartServer();
                 HttpServer.Instance.Register("/api/license", async (req) =>
                 {
-                    LicenseMessage licenseMessage = new LicenseMessage(ELicenseEnvironment.DEV, Application.version);
+                    LicenseMessage licenseMessage = new LicenseMessage(ELicenseEnvironment.DEV, _appVersion);
                     return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
                 });
                 LoadScene(_sceneToLoad);
@@ -70,7 +73,7 @@ namespace UniVRseDashboardIntegration
             try
             {
                 // Build the query string from the LicenseRequest object.
-                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, Application.version);
+                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, _appVersion);
 
                 // Perform the license validation request.
                 string responseJson = await HttpService.Instance.SendRequestAsync(
@@ -92,7 +95,7 @@ namespace UniVRseDashboardIntegration
                 HttpServer.Instance.StartServer();
                 HttpServer.Instance.Register("/api/license", async (req) =>
                 {
-                    LicenseMessage licenseMessage = new LicenseMessage(licenseResponse.environment.ToEnum<ELicenseEnvironment>(), Application.version);
+                    LicenseMessage licenseMessage = new LicenseMessage(licenseResponse.environment.ToEnum<ELicenseEnvironment>(), _appVersion);
                     return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
                 });
 

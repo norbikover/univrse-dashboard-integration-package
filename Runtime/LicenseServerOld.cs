@@ -24,6 +24,7 @@ namespace UniVRseDashboardIntegration
         // Private variables.
         private bool _isCheckingLicense = false;
         private bool _loadingScene = false;
+        private string _appVersion;
 
         private void Start()
         {
@@ -32,6 +33,8 @@ namespace UniVRseDashboardIntegration
                 LoadScene(_licenseClientScene);
                 return;
             }
+
+            _appVersion = Application.version;
 
             // Auto populate the license code.
             if (PlayerPrefs.HasKey(Constants.LICENSE_CODE_KEY))
@@ -57,7 +60,7 @@ namespace UniVRseDashboardIntegration
                 HttpServer.Instance.StartServer();
                 HttpServer.Instance.Register("/api/license", async (req) =>
                 {
-                    LicenseMessageOld licenseMessage = new LicenseMessageOld(Constants.DEFAULT_SCENE_NAME, ELicenseEnvironment.DEV, Application.version);
+                    LicenseMessageOld licenseMessage = new LicenseMessageOld(Constants.DEFAULT_SCENE_NAME, ELicenseEnvironment.DEV, _appVersion);
                     return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
                 });
                 LoadScene(Constants.DEFAULT_SCENE_NAME);
@@ -71,7 +74,7 @@ namespace UniVRseDashboardIntegration
             try
             {
                 // Build the query string from the LicenseRequest object.
-                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, Application.version);
+                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, _appVersion);
 
                 // Perform the license validation request.
                 string responseJson = await HttpService.Instance.SendRequestAsync(
@@ -96,7 +99,7 @@ namespace UniVRseDashboardIntegration
                 HttpServer.Instance.StartServer();
                 HttpServer.Instance.Register("/api/license", async (req) =>
                 {
-                    LicenseMessageOld licenseMessage = new LicenseMessageOld(sceneName, licenseResponse.environment.ToEnum<ELicenseEnvironment>(), Application.version);
+                    LicenseMessageOld licenseMessage = new LicenseMessageOld(sceneName, licenseResponse.environment.ToEnum<ELicenseEnvironment>(), _appVersion);
                     return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
                 });
 
@@ -114,7 +117,7 @@ namespace UniVRseDashboardIntegration
             // Set the checking license variable back to false in order to allow other requests.
             _isCheckingLicense = false;
         }
-        
+
         private void LoadScene(string sceneName)
         {
             if (_loadingScene) return;
