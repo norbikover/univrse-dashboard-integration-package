@@ -6,6 +6,9 @@ using System;
 using Newtonsoft.Json;
 using TMPro;
 using NaughtyAttributes;
+using LANHelpers;
+using System.Threading.Tasks;
+using HttpIntegration;
 
 namespace UniVRseDashboardIntegration
 {
@@ -16,8 +19,6 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private TMP_Text _errorText;
 
         // Private variables.
-        private UdpClient _udpClient;
-        private bool _stopListening = false;
         private bool _loadingScene = false;
 
         private void Start()
@@ -25,48 +26,42 @@ namespace UniVRseDashboardIntegration
             // Clear the error text.
             _errorText.text = "";
 
-            // Bind to the same port as the server.
-            _udpClient = new UdpClient(Constants.UDP_LICENSE_PORT);
+            // Start searching for servers.
+            LANDiscovery.Instance.OnServerFound += OnServerFound;
+            LANDiscovery.Instance.StartActiveDiscovery();
+        }
 
-            // Start listening for broadcasts.
-            ListenForBroadcasts();
+        private async void OnServerFound(string ip)
+        {
+            try
+            {
+                string licenseJson = await HttpService.Instance.SendRequestAsync(
+                    postfix: "/license",
+                    method: HttpMethod.GET,
+                    serverUrl: $"http://{ip}:8080/api"
+                );
+
+                LicenseMessage licenseMessage = JsonConvert.DeserializeObject<LicenseMessage>(licenseJson);
+
+                // Return in case the server has a different version than the client.
+                if (licenseMessage.AppVersion != Application.version) throw new Exception($"A server was found but the versions do not match. Server version: {licenseMessage.AppVersion}; Client version: {Application.version}");
+
+                // Update the license static references environment such that the client can use it too.
+                LicenseStaticReferences.LicenseEnvironment = licenseMessage.Environment;
+
+                // Store the scene name and load the next scene.
+                LoadScene(_sceneToLoad);
+            }
+            catch (Exception ex)
+            {
+                _errorText.text = ex.Message;
+            }
         }
 
         private void OnDestroy()
-        {        
-            _stopListening = true; // Avoid infinite loops when quitting from this scene.
-            _udpClient?.Close();
-        }
-
-        private async void ListenForBroadcasts()
         {
-            while (!_stopListening)
-            {
-                try
-                {
-                    UdpReceiveResult result = await _udpClient.ReceiveAsync();
-                    string json = Encoding.UTF8.GetString(result.Buffer);
-                    LicenseMessage licenseMessage = JsonConvert.DeserializeObject<LicenseMessage>(json);
-
-                    // Return in case the server has a different version than the client.
-                    if (licenseMessage.AppVersion != Application.version) throw new Exception($"A server was found but the versions do not match. Server version: {licenseMessage.AppVersion}; Client version: {Application.version}");
-
-
-                    // Update the license static references environment such that the client can use it too.
-                    LicenseStaticReferences.LicenseEnvironment = licenseMessage.Environment;
-
-                    // Store the scene name and load the next scene.
-                    LoadScene(_sceneToLoad);
-
-                    // Close the upd client and return out of the function to avoid loading the scene multiple times.
-                    _udpClient?.Close();
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    _errorText.text = ex.Message;
-                }
-            }
+            if (LANDiscovery.Instance != null)
+                LANDiscovery.Instance.OnServerFound -= OnServerFound;
         }
 
         private void LoadScene(string sceneName)

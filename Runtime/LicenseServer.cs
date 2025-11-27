@@ -5,8 +5,9 @@ using System;
 using UnityEngine.SceneManagement;
 using UnityEngine.XR;
 using UnityEngine.UI;
-using Mirror;
 using HttpIntegration;
+using LANHelpers;
+using NaughtyAttributes;
 
 namespace UniVRseDashboardIntegration
 {
@@ -42,12 +43,6 @@ namespace UniVRseDashboardIntegration
             _validateLicenseButton.onClick.AddListener(OnValidateLicenceClicked);
         }
 
-        private void OnDestroy()
-        {
-            // Unsubscribe from the validate button on click event.
-            if(_validateLicenseButton != null) _validateLicenseButton.onClick.RemoveListener(OnValidateLicenceClicked);
-        }
-
         public async void OnValidateLicenceClicked()
         {
             // Return in case there is an ongoing request.
@@ -57,7 +52,13 @@ namespace UniVRseDashboardIntegration
             if (string.Equals(_licenseField.text, Constants.SECRET_LICENSE))
             {
                 // Start the license server with the DEV environment.
-                StartLicenseBeacon(ELicenseEnvironment.DEV);
+                LANDiscovery.Instance.StartServer();
+                HttpServer.Instance.StartServer();
+                HttpServer.Instance.Register("/api/license", async (req) =>
+                {
+                    LicenseMessage licenseMessage = new LicenseMessage(ELicenseEnvironment.DEV, Application.version);
+                    return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
+                });
                 LoadScene(_sceneToLoad);
                 return;
             }
@@ -86,9 +87,19 @@ namespace UniVRseDashboardIntegration
                 LicenseStaticReferences.LicenseEnvironment = licenseResponse.environment.ToEnum<ELicenseEnvironment>();
                 PlayerPrefs.SetString(Constants.LICENSE_CODE_KEY, _licenseField.text); // Store the used license code such that we can autopopulate it next time.       
 
-                // Send the environment constantly and load the correct scene.
-                StartLicenseBeacon(licenseResponse.environment.ToEnum<ELicenseEnvironment>());
+                // Register the http server path.
+                LANDiscovery.Instance.StartServer();
+                HttpServer.Instance.StartServer();
+                HttpServer.Instance.Register("/api/license", async (req) =>
+                {
+                    LicenseMessage licenseMessage = new LicenseMessage(licenseResponse.environment.ToEnum<ELicenseEnvironment>(), Application.version);
+                    return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
+                });
+
+                // Start the background license validation process.
                 LicenseBackgroundValidator.Instance.StartBackgroundLicenseChecking(_licenseField.text);
+
+                // Load the assigned scene.
                 LoadScene(_sceneToLoad);
             }
             catch (Exception ex)
@@ -100,20 +111,18 @@ namespace UniVRseDashboardIntegration
             _isCheckingLicense = false;
         }
 
-        private void StartLicenseBeacon(ELicenseEnvironment environment)
-        {
-            GameObject _licenseServerObject = new GameObject("License Beacon");
-            DontDestroyOnLoad(_licenseServerObject);
-            LicenseBeacon licenseServer = _licenseServerObject.AddComponent<LicenseBeacon>();
-            licenseServer.StartBroadcast(environment);
-        }
-
         private void LoadScene(string sceneName)
         {
             if (_loadingScene) return;
 
             _loadingScene = true;
             SceneManager.LoadSceneAsync(sceneName);
+        }
+    
+        private void OnDestroy()
+        {
+            // Unsubscribe from the validate button on click event.
+            if(_validateLicenseButton != null) _validateLicenseButton.onClick.RemoveListener(OnValidateLicenceClicked);
         }
     }
 }
