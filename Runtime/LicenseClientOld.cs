@@ -54,12 +54,6 @@ namespace UniVRseDashboardIntegration
             }
         }
 
-        private void OnDestroy()
-        {
-            if (LANDiscovery.Instance != null)
-                LANDiscovery.Instance.OnServerFound -= OnServerFound;
-        }
-
         private void LoadScene(string sceneName)
         {
             if (_loadingScene) return;
@@ -71,6 +65,12 @@ namespace UniVRseDashboardIntegration
         public void SkipLicenseChecking()
         {
             LoadScene(Constants.DEFAULT_SCENE_NAME);
+        }
+
+        private void OnDestroy()
+        {
+            if (LANDiscovery.Instance != null)
+                LANDiscovery.Instance.OnServerFound -= OnServerFound;
         }
     }
 }
