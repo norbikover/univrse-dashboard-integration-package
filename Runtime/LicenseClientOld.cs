@@ -26,8 +26,9 @@ namespace UniVRseDashboardIntegration
             LANDiscovery.Instance.StartActiveDiscovery();
         }
 
-           private async void OnServerFound(string ip)
+        private async void OnServerFound(string ip)
         {
+            LANDiscovery.Instance.StopActiveDiscovery();
             try
             {
                 string licenseJson = await HttpService.Instance.SendRequestAsync(
