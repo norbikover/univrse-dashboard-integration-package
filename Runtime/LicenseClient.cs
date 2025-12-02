@@ -38,7 +38,7 @@ namespace UniVRseDashboardIntegration
                 string licenseJson = await HttpService.Instance.SendRequestAsync(
                     postfix: "/license",
                     method: HttpMethod.GET,
-                    serverUrl: $"http://{ip}:8080/api"
+                    serverUrl: $"http://{ip}:{HttpServer.Instance.Port}/api"
                 );
 
                 LicenseMessage licenseMessage = JsonConvert.DeserializeObject<LicenseMessage>(licenseJson);
