@@ -23,7 +23,7 @@ namespace UniVRseDashboardIntegration
 
             // Start searching for servers.
             LANDiscovery.Instance.OnServerFound += OnServerFound;
-            LANDiscovery.Instance.StartActiveDiscovery();
+            LANDiscovery.Instance.StartListening();
         }
 
         private async void OnServerFound(string ip)
@@ -45,7 +45,7 @@ namespace UniVRseDashboardIntegration
                 LicenseStaticReferences.LicenseEnvironment = licenseMessage.Environment;
 
                 // Store the scene name and load the next scene.
-                LANDiscovery.Instance.StopActiveDiscovery();
+                LANDiscovery.Instance.StopListening();
                 LoadScene(licenseMessage.SceneName);
             }
             catch (Exception ex)
