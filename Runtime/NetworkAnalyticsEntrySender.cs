@@ -34,9 +34,6 @@ namespace UniVRseDashboardIntegration
         {
             base.OnStartClient();
 
-            // Initialize the time since start.
-            this.TotalTime = 0f;
-
             // Send an initial entry to the server and then repeatedly send updates to the server.
             if(_sendInterval > 0) InvokeRepeating(nameof(SendAnalyticsEntryToServer), 0f, _sendInterval);
         }
@@ -71,6 +68,10 @@ namespace UniVRseDashboardIntegration
         [Client]
         public void ResetEntryID()
         {
+            // Rest the total time.
+            this.TotalTime = 0f;
+
+            // Tell the server to remove the clientNetworkId-documentId mapping.
             CmdResetEntryID();
         }
 
