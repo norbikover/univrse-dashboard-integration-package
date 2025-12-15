@@ -33,10 +33,10 @@ namespace UniVRseDashboardIntegration
 
         // This represents the ID (from Mongo) of the first AnalyticsEntry sent on start.
         // Basically each client that sends entries to the server will first receive a mongoid for that entry.
-        // We will then map that mongoID with the user's id on the network.
-        // If a client sends a new entry we can now match the given network id to the mongo entry id and update the entry instead of pushing a new one.
-        // You might think we could use the deviceID instead of the networkID, but that is wrong. When a headset would stop the game and start again (while the server stays on), the data collected by the previous play session would be overwritten.
-        private Dictionary<int, string> _entriesIDS = new Dictionary<int, string>();
+        // We will then map that mongoID with the user's device id.
+        // If a client sends a new entry we can now match the given device id to the mongo entry id and update the entry instead of pushing a new one.
+        // Because we are using deviceID, the server will remove the deviceID from the Dictionary whenever a client joins the game. This is not needed when clients reconnect cause local data is preserved so we actually want to use PUT in that case.
+        private Dictionary<string, string> _entriesIDS = new Dictionary<string, string>();
         private DateTime _startTime;
 
         private void Start()
@@ -47,7 +47,7 @@ namespace UniVRseDashboardIntegration
                 InvokeRepeating(nameof(PushLocalDocumentsToCloudRepeating), _localToCloudPushInterval, _localToCloudPushInterval);
         }
 
-        public async void SendAnalyticsEntryToCloud(string deviceId, float totalTime, Dictionary<string, object> data, int senderNetworkID)
+        public async void SendAnalyticsEntryToCloud(string deviceId, float totalTime, Dictionary<string, object> data)
         {
             // Return in case no license code was previously provided (most probably DEV build).
             if (string.IsNullOrEmpty(LicenseStaticReferences.LicenseCode))
@@ -55,9 +55,11 @@ namespace UniVRseDashboardIntegration
                 Debug.Log("Cannot push analytics to the cloud without a License Code.");
                 return;
             }
-
+            
+            // Store the device name (if any).
             string deviceName = DeviceMappingSystem.Instance.GetDeviceName(deviceId);
 
+            // Prepare the analytics entry.
             AnalyticsEntry analyticsEntry = new AnalyticsEntry(
                 licenseCode: LicenseStaticReferences.LicenseCode,
                 deviceId: !string.IsNullOrEmpty(deviceName) ? deviceName : deviceId,
@@ -66,7 +68,7 @@ namespace UniVRseDashboardIntegration
             );
 
             // If the client has sent another entry before it should have a mapping in the dictionary such that we can update the existing entry from the database instead of pusing a new one.
-            string senderEntryID = _entriesIDS.ContainsKey(senderNetworkID) ? _entriesIDS[senderNetworkID] : "";
+            string senderEntryID = _entriesIDS.ContainsKey(deviceId) ? _entriesIDS[deviceId] : "";
 
             try
             {
@@ -80,8 +82,8 @@ namespace UniVRseDashboardIntegration
 
                 string entryCloudID = response.Trim('"');
 
-                // Create a mapping between the sender's network ID and the entry ID received from the backend.
-                _entriesIDS[senderNetworkID] = entryCloudID;
+                // Create a mapping between the sender's device ID and the entry ID received from the backend.
+                _entriesIDS[deviceId] = entryCloudID;
 
                 // Store the entry locally on success.
                 if (_storeSuccessDocumentsLocally) OfflineDatabaseManager.Instance.AddDocumentToCollection(analyticsEntry, entryCloudID, _successEntriesCollectionName);
@@ -92,12 +94,12 @@ namespace UniVRseDashboardIntegration
                 Debug.Log($"Failed to send entry to the cloud. Storing the document locally. Error: {ex.Message}");
 
                 // Check if the sender already has an entry in the database. If it does we will be able to update it later, otherwise we will later push the error entry as a new one.
-                string entryCloudID = _entriesIDS.ContainsKey(senderNetworkID) ? _entriesIDS[senderNetworkID] : "";
+                string entryCloudID = _entriesIDS.ContainsKey(deviceId) ? _entriesIDS[deviceId] : "";
 
                 // If there's an error, store the entry locally.
                 if (_storeErrorDocumentsLocally)
                 {
-                    string documentName = string.IsNullOrEmpty(entryCloudID) ? $"{_startTime.ToLongString()}({senderNetworkID})" : entryCloudID;
+                    string documentName = string.IsNullOrEmpty(entryCloudID) ? $"{_startTime.ToLongString()}({deviceId})" : entryCloudID;
                     OfflineDatabaseManager.Instance.AddDocumentToCollection(analyticsEntry, documentName, _errorEntriesCollectionName);
                 }
             }
@@ -144,9 +146,9 @@ namespace UniVRseDashboardIntegration
             }
         }
 
-        public void ResetEntryID(int senderNetworkID) // This is used when the same network entity should send a new entry to the cloud database instead of updating an already existing entry. 
+        public void ResetEntryID(string senderDeviceId) // This is used when the same network entity should send a new entry to the cloud database instead of updating an already existing entry. 
         {
-            _entriesIDS.Remove(senderNetworkID);
+            _entriesIDS.Remove(senderDeviceId);
         }
     }
 }
