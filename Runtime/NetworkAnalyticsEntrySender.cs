@@ -76,6 +76,13 @@ namespace UniVRseDashboardIntegration
             // Send the entry's data to the cloud.
             AnalyticsEntryManager.Instance.SendAnalyticsEntryToCloud(deviceId, totalTime, JsonConvert.DeserializeObject<Dictionary<string, object>>(dataJson));
         }
+
+        [Client]
+        protected virtual void ResetAllData()
+        {
+            // Reset the total time.
+            this.TotalTime = 0f;
+        }
         
         [Client]
         public void ResetEntryID()
@@ -91,13 +98,6 @@ namespace UniVRseDashboardIntegration
         private void CmdResetEntryID(string deviceId)
         {
             AnalyticsEntryManager.Instance.ResetEntryID(deviceId);
-        }
-
-        [Client]
-        public virtual void ResetAllData()
-        {
-            // Reset the total time.
-            this.TotalTime = 0f;
         }
     }
 }
