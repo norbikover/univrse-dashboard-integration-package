@@ -45,8 +45,11 @@ namespace UniVRseDashboardIntegration
                 SendAnalyticsEntryToServer();
 
             // Repeatedly send updates to the server.
-            if(_sendAtTimeInterval) 
-                InvokeRepeating(nameof(SendAnalyticsEntryToServer), _sendInterval, _sendInterval);   
+            if(_sendAtTimeInterval)
+            {
+                CancelInvoke(nameof(SendAnalyticsEntryToServer));
+                InvokeRepeating(nameof(SendAnalyticsEntryToServer), _sendInterval, _sendInterval);  
+            }
         }
 
         [ClientCallback]

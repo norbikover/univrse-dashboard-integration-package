@@ -44,7 +44,10 @@ namespace UniVRseDashboardIntegration
             _startTime = DateTime.Now;
 
             if (_localToCloudPushInterval > 0)
+            {
+                CancelInvoke(nameof(PushLocalDocumentsToCloudRepeating));
                 InvokeRepeating(nameof(PushLocalDocumentsToCloudRepeating), _localToCloudPushInterval, _localToCloudPushInterval);
+            }
         }
 
         public async void SendAnalyticsEntryToCloud(string deviceId, float totalTime, Dictionary<string, object> data)
