@@ -81,7 +81,7 @@ namespace UniVRseDashboardIntegration
         }
 
         [Client]
-        protected virtual void ResetAllData()
+        public virtual void ResetAllData()
         {
             // Reset the total time.
             this.TotalTime = 0f;
@@ -90,9 +90,6 @@ namespace UniVRseDashboardIntegration
         [Client]
         public void ResetEntryID()
         {
-            // First reset all the stored data to default values.
-            ResetAllData();
-
             // Tell the server to remove the clientId-documentId mapping.
             CmdResetEntryID(SystemInfo.deviceUniqueIdentifier);
         }
