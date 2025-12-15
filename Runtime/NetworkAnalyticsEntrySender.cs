@@ -57,21 +57,21 @@ namespace UniVRseDashboardIntegration
         }
 
         [ClientCallback]
-        protected virtual void SendAnalyticsEntryToServer() // Called externally on the client side (the server might call it too but the [ClientCallback] flag makes sure the server won't push an event).
+        protected virtual void SendAnalyticsEntryToServer() // Called externally on the client side (the server might call it too but the [ClientCallback] flag makes sure the server won't push an entry).
         {   
             // Empty dictionary.
             Dictionary<string, object> data = new Dictionary<string, object>();
 
             // Send the analytics entry to the server.
-            CmdPushAnalyticsEvent(SystemInfo.deviceUniqueIdentifier, TotalTime, JsonConvert.SerializeObject(data));
+            CmdPushAnalyticsEntry(SystemInfo.deviceUniqueIdentifier, TotalTime, JsonConvert.SerializeObject(data));
 
-            if (this.DebugLog) Debug.Log("Sent analytics event to server.");
+            if (this.DebugLog) Debug.Log("Sent analytics entry to server.");
         }
 
         [Command(requiresAuthority = false)]
-        protected void CmdPushAnalyticsEvent(string deviceId, float totalTime, string dataJson)
+        protected void CmdPushAnalyticsEntry(string deviceId, float totalTime, string dataJson)
         {
-            if (this.DebugLog) Debug.Log("[Server] Received Analytics Event data from a client. Pushing it to the cloud ....");
+            if (this.DebugLog) Debug.Log("[Server] Received Analytics Entry data from a client. Pushing it to the cloud ....");
 
             // Send the entry's data to the cloud.
             AnalyticsEntryManager.Instance.SendAnalyticsEntryToCloud(deviceId, totalTime, JsonConvert.DeserializeObject<Dictionary<string, object>>(dataJson));
