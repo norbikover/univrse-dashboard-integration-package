@@ -67,6 +67,7 @@ namespace UniVRseDashboardIntegration
                 licenseCode: LicenseStaticReferences.LicenseCode,
                 deviceId: !string.IsNullOrEmpty(deviceName) ? deviceName : deviceId,
                 totalTime: totalTime,
+                version: Application.version,
                 data: data
             );
 
