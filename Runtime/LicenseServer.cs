@@ -68,7 +68,7 @@ namespace UniVRseDashboardIntegration
 
             // Set the checking license to true and reset the error text.
             _isCheckingLicense = true;
-            _errorText.text = "";
+            _errorText.text = "Validating ...";
 
             try
             {
