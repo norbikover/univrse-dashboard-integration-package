@@ -50,7 +50,8 @@ namespace UniVRseDashboardIntegration
                 LicenseStaticReferences.LicenseEnvironment = licenseMessage.Environment;
 
                 // Store the scene name and load the next scene.
-                LANDiscovery.Instance.StopListening();
+                if (LANDiscovery.Instance) LANDiscovery.Instance.OnServerFound -= OnServerFound;
+                if (LANDiscovery.Instance) LANDiscovery.Instance.StopListening();
                 LoadScene(_sceneToLoad);
             }
             catch (Exception ex)
