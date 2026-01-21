@@ -19,6 +19,7 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private TMP_Text _errorText;
 
         // Private variables.
+        private bool _validServerFound = false;
         private bool _loadingScene = false;
 
         private void Start()
@@ -33,6 +34,9 @@ namespace UniVRseDashboardIntegration
 
         private async void OnServerFound(string ip)
         {
+            if(_validServerFound) return;
+            _validServerFound = true;
+
             try
             {
                 string licenseJson = await HttpService.Instance.SendRequestAsync(
@@ -56,6 +60,7 @@ namespace UniVRseDashboardIntegration
             }
             catch (Exception ex)
             {
+                _validServerFound = false;
                 _errorText.text = ex.Message;
             }
         }
