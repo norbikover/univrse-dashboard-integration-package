@@ -97,13 +97,10 @@ namespace UniVRseDashboardIntegration
             {
                 Debug.Log($"Failed to send entry to the cloud. Storing the document locally. Error: {ex.Message}");
 
-                // Check if the sender already has an entry in the database. If it does we will be able to update it later, otherwise we will later push the error entry as a new one.
-                string entryCloudID = _entriesIDS.ContainsKey(deviceId) ? _entriesIDS[deviceId] : "";
-
                 // If there's an error, store the entry locally.
                 if (_storeErrorDocumentsLocally)
                 {
-                    string documentName = string.IsNullOrEmpty(entryCloudID) ? $"{_startTime.ToLongString()}({deviceId})" : entryCloudID;
+                    string documentName = string.IsNullOrEmpty(senderEntryID) ? $"{_startTime.ToLongString()}({deviceId})" : senderEntryID;
                     OfflineDatabaseManager.Instance.AddDocumentToCollection(analyticsEntry, documentName, _errorEntriesCollectionName);
                 }
             }
@@ -111,9 +108,6 @@ namespace UniVRseDashboardIntegration
 
         private async void PushLocalDocumentsToCloudRepeating() // We try to push all the local documents to the cloud.
         {
-            // Check if the device is connected to the internet
-            if (!InternetChecker.Instance.IsConnectedToInternet()) return;
-
             // Get all the error entries from the local database and go through all of them.
             Dictionary<string, AnalyticsEntry> errorEntries = OfflineDatabaseManager.Instance.ReadDocumentsFromCollection<AnalyticsEntry>(_errorEntriesCollectionName);
             foreach (var kvp in errorEntries)

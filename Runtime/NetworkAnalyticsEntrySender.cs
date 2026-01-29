@@ -29,16 +29,41 @@ namespace UniVRseDashboardIntegration
         [Header("Debug")]
         [SerializeField] protected bool DebugLog = true;
 
+        // SyncVars.
+        [SyncVar] private float _serverTime;
+
         // Mandatory fields.
         protected float TotalTime;
+
+        /// <summary>
+        /// Client-first analytics approach: client sends data to server, which forwards it to the cloud.
+        /// 
+        /// Scenarios:
+        /// a) Normal flow: Server opens → Client connects → Client sends data → Server pushes to cloud
+        /// 
+        /// b) Reconnection: Server stays open → Client reconnects with existing data → Server updates 
+        ///    existing cloud entry (using clientId-cloudId mapping)
+        /// 
+        /// c) Client reset: Server stays open → Client closes then reconnects with no data (TotalTime == 0)
+        ///    → Server resets clientId-cloudId mapping → New cloud entry created
+        ///    (Prevents overwriting cloud data with empty data)
+        /// 
+        /// d) Server reset: Server closes → Client stays running with data (TotalTime > _serverTime)
+        ///    → Client must clear all data on reconnection → Server creates new entry with fresh mapping
+        ///    (Prevents old data being duplicated in new cloud entry)
+        /// </summary>
 
         public override void OnStartClient()
         {
             base.OnStartClient();
 
-            // In case the client is a new one (no reconnection) we want to make sure the server pushes to a new entry id in the cloud.
+            // c. In case the client is a new one (no reconnection) we want to make sure the server pushes to a new entry id in the cloud.
             if(this.TotalTime == 0)
                 ResetEntryID();
+
+            // d. In case the server was closed but the client still has some data, we want to reset it.
+            if(this.TotalTime > _serverTime)
+                ResetAllData();
 
             // Send an initial entry to the server.
             if(_sendOnStartClient) 
@@ -55,6 +80,8 @@ namespace UniVRseDashboardIntegration
         [ClientCallback]
         protected virtual void Update()
         {
+            if(isServer) _serverTime += Time.deltaTime;
+
             // Increase the time since start.
             this.TotalTime += Time.deltaTime;
         }
@@ -66,7 +93,7 @@ namespace UniVRseDashboardIntegration
             Dictionary<string, object> data = new Dictionary<string, object>();
 
             // Send the analytics entry to the server.
-            CmdPushAnalyticsEntry(SystemInfo.deviceUniqueIdentifier, TotalTime, JsonConvert.SerializeObject(data));
+            CmdPushAnalyticsEntry(SystemInfo.deviceUniqueIdentifier, this.TotalTime, JsonConvert.SerializeObject(data));
 
             if (this.DebugLog) Debug.Log("Sent analytics entry to server.");
         }
