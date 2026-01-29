@@ -2,6 +2,7 @@ using UnityEngine;
 using Mirror;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using MirrorUtils;
 
 namespace UniVRseDashboardIntegration
 {
@@ -26,14 +27,26 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private bool _sendAtTimeInterval = true;
         [SerializeField] private float _sendInterval = 60f;
 
+        [Header("Activity Detection (Optional)")]
+        [SerializeField] private Transform _xrCamera;
+        [SerializeField] private float _positionThreshold = 0.01f;
+        [SerializeField] private float _rotationThreshold = 1f;
+        [SerializeField] private float _inactivityWindowDuration = 300f; // 5 minutes
+        [SerializeField] private bool _stopOnInactivity = true;
+
         [Header("Debug")]
         [SerializeField] protected bool DebugLog = true;
 
-        // SyncVars.
-        [SyncVar] private float _serverTime;
-
         // Mandatory fields.
         protected float TotalTime;
+
+        // Activity tracking.
+        private float _inactivityTimer = 0f;
+        private Vector3 _lastCameraPosition = Vector3.zero;
+        private Quaternion _lastCameraRotation = Quaternion.identity;
+
+        // Helpers.
+        protected bool Inactive => !Application.isEditor && _xrCamera != null && _inactivityTimer >= _inactivityWindowDuration;
 
         /// <summary>
         /// Client-first analytics approach: client sends data to server, which forwards it to the cloud.
@@ -48,7 +61,7 @@ namespace UniVRseDashboardIntegration
         ///    → Server resets clientId-cloudId mapping → New cloud entry created
         ///    (Prevents overwriting cloud data with empty data)
         /// 
-        /// d) Server reset: Server closes → Client stays running with data (TotalTime > _serverTime)
+        /// d) Server reset: Server closes → Client stays running with data (LocalTime > GlobalTime)
         ///    → Client must clear all data on reconnection → Server creates new entry with fresh mapping
         ///    (Prevents old data being duplicated in new cloud entry)
         /// </summary>
@@ -62,7 +75,7 @@ namespace UniVRseDashboardIntegration
                 ResetEntryID();
 
             // d. In case the server was closed but the client still has some data, we want to reset it.
-            if(this.TotalTime > _serverTime)
+            if(NetworkGlobalTimer.Instance.LocalTime > NetworkGlobalTimer.Instance.GlobalTime)
                 ResetAllData();
 
             // Send an initial entry to the server.
@@ -73,22 +86,42 @@ namespace UniVRseDashboardIntegration
             if(_sendAtTimeInterval)
             {
                 CancelInvoke(nameof(SendAnalyticsEntryToServer));
-                InvokeRepeating(nameof(SendAnalyticsEntryToServer), _sendInterval, _sendInterval);  
+                InvokeRepeating(nameof(SendAnalyticsEntryToServer), _sendInterval, _sendInterval);
             }
+        }
+
+        [ClientCallback]
+        private void CheckForInactivity()
+        {
+            if(_xrCamera == null) return;
+
+            // Check if movement exceeds thresholds.
+            bool movementDetected = Vector3.Distance(_xrCamera.position, _lastCameraPosition) > _positionThreshold || 
+                                    Quaternion.Angle(_xrCamera.rotation, _lastCameraRotation) > _rotationThreshold;
+
+            // Update last known position and rotation.
+            _lastCameraPosition = _xrCamera.position;
+            _lastCameraRotation = _xrCamera.rotation;
+
+            if(!movementDetected) // Increment inactivity timer.     
+                _inactivityTimer += Time.deltaTime;
+            else _inactivityTimer = 0f;
         }
 
         [ClientCallback]
         protected virtual void Update()
         {
-            if(isServer) _serverTime += Time.deltaTime;
+            CheckForInactivity();
+            if(this.Inactive) return; // Do not increase time if inactive.
 
-            // Increase the time since start.
             this.TotalTime += Time.deltaTime;
         }
 
         [ClientCallback]
         protected virtual void SendAnalyticsEntryToServer() // Called externally on the client side (the server might call it too but the [ClientCallback] flag makes sure the server won't push an entry).
         {   
+            if(this.Inactive) return; // Make sure whoever overrides this method also respects inactivity.
+
             // Empty dictionary.
             Dictionary<string, object> data = new Dictionary<string, object>();
 
@@ -112,6 +145,9 @@ namespace UniVRseDashboardIntegration
         {
             // Reset the total time.
             this.TotalTime = 0f;
+
+            // Reset activity tracking.
+            _inactivityTimer = 0f;
         }
         
         [Client]
