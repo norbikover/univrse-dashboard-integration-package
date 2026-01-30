@@ -9,7 +9,7 @@ namespace UniVRseDashboardIntegration
 
         private void Start()
         {
-            _canvas.SetActive(LicenseStaticReferences.LicenseEnvironment == ELicenseEnvironment.BETA);
+            _canvas.SetActive(LicenseStaticReferences.LicenseEnvironment == ELicenseEnvironment.DEMO);
         }
     }
 }

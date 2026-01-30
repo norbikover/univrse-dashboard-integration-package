@@ -4,6 +4,7 @@ namespace UniVRseDashboardIntegration
     {
         DEV,
         ALPHA,
+        DEMO,
         BETA,
         PROD
     }
