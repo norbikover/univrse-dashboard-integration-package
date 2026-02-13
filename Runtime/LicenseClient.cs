@@ -16,6 +16,7 @@ namespace UniVRseDashboardIntegration
     {
         [Header("References")]
         [SerializeField, Scene] private string _sceneToLoad;
+        [SerializeField] private TMP_Text _mainText;
         [SerializeField] private TMP_Text _errorText;
 
         // Private variables.
@@ -25,7 +26,7 @@ namespace UniVRseDashboardIntegration
         private void Start()
         {
             // Clear the error text.
-            _errorText.text = "";
+            if(_errorText) _errorText.text = "";
 
             // Start searching for servers.
             LANDiscovery.Instance.OnServerFound += OnServerFound;
@@ -39,6 +40,8 @@ namespace UniVRseDashboardIntegration
 
             try
             {
+                if(_errorText) _errorText.text = "";
+
                 string licenseJson = await HttpService.Instance.SendRequestAsync(
                     postfix: "/license",
                     method: HttpMethod.GET,
@@ -61,15 +64,16 @@ namespace UniVRseDashboardIntegration
             catch (Exception ex)
             {
                 _validServerFound = false;
-                _errorText.text = ex.Message;
+                if(_errorText)_errorText.text = ex.Message;
             }
         }
 
         private void LoadScene(string sceneName)
         {
             if (_loadingScene) return;
-
             _loadingScene = true;
+
+            if(_mainText) _mainText.text = "Loading scene...";
             SceneManager.LoadSceneAsync(sceneName);
         }
 
