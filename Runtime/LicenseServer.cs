@@ -52,7 +52,7 @@ namespace UniVRseDashboardIntegration
             if (_isCheckingLicense || _loadingScene) return;
 
             // Check for the SECRET_LICENSE.
-            if (string.Equals(_licenseField.text, Constants.SECRET_LICENSE))
+            if (Application.isEditor && string.Equals(_licenseField.text, Constants.SECRET_LICENSE))
             {
                 // Start the license server with the DEV environment.
                 LANDiscovery.Instance.StartServer();
