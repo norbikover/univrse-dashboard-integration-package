@@ -3,7 +3,6 @@ using TMPro;
 using Newtonsoft.Json;
 using System;
 using UnityEngine.SceneManagement;
-using UnityEngine.XR;
 using UnityEngine.UI;
 using HttpIntegration;
 using LANHelpers;
@@ -27,7 +26,7 @@ namespace UniVRseDashboardIntegration
 
         private void Start()
         {
-            if (!Application.isEditor && XRSettings.enabled)
+            if (!Application.isEditor && Application.platform == RuntimePlatform.Android)
             {
                 LoadScene(_licenseClientScene);
                 return;
