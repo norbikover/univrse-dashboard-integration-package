@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using HttpIntegration;
 using LANHelpers;
 using NaughtyAttributes;
+using UnityEngine.XR;
 
 namespace UniVRseDashboardIntegration
 {
@@ -26,7 +27,7 @@ namespace UniVRseDashboardIntegration
 
         private void Start()
         {
-            if (!Application.isEditor && Application.platform == RuntimePlatform.Android)
+            if (!Application.isEditor && Application.platform == RuntimePlatform.Android && XRSettings.enabled)
             {
                 LoadScene(_licenseClientScene);
                 return;

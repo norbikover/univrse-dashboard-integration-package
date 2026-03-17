@@ -46,7 +46,8 @@ namespace UniVRseDashboardIntegration
         private Quaternion _lastCameraRotation = Quaternion.identity;
 
         // Helpers.
-        protected bool Inactive => !Application.isEditor && _xrCamera != null && _inactivityTimer >= _inactivityWindowDuration;
+        protected bool InactivityTrackingEnabled => _xrCamera != null && !Application.isEditor;
+        protected bool IsSessionInactive => this.InactivityTrackingEnabled && _inactivityTimer >= _inactivityWindowDuration;
 
         /// <summary>
         /// Client-first analytics approach: client sends data to server, which forwards it to the cloud.
@@ -112,7 +113,7 @@ namespace UniVRseDashboardIntegration
         protected virtual void Update()
         {
             CheckForInactivity();
-            if(this.Inactive) return; // Do not increase time if inactive.
+            if(this.IsSessionInactive) return; // Do not increase time if inactive.
 
             this.TotalTime += Time.deltaTime;
         }
@@ -120,7 +121,7 @@ namespace UniVRseDashboardIntegration
         [ClientCallback]
         protected virtual void SendAnalyticsEntryToServer() // Called externally on the client side (the server might call it too but the [ClientCallback] flag makes sure the server won't push an entry).
         {   
-            if(this.Inactive) return; // Make sure whoever overrides this method also respects inactivity.
+            if(this.IsSessionInactive) return; // Make sure whoever overrides this method also respects inactivity.
 
             // Empty dictionary.
             Dictionary<string, object> data = new Dictionary<string, object>();
