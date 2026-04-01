@@ -46,8 +46,6 @@ namespace UniVRseDashboardIntegration
 
         public async void SendAnalyticsEntryToCloud(string deviceId, float totalTime, Dictionary<string, object> data)
         {
-            if(_debugLog) Debug.Log($"Received analytics entry to push. Device ID: {deviceId}, Total Time: {totalTime}, Data: {data}");
-
             // Return in case no license code was previously provided (most probably DEV build).
             if (string.IsNullOrEmpty(LicenseStaticReferences.LicenseCode))
             {
