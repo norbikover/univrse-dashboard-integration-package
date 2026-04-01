@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System;
 using MirrorUtils;
+using System.Collections;
 
 namespace UniVRseDashboardIntegration
 {
@@ -68,20 +69,30 @@ namespace UniVRseDashboardIntegration
         {
             base.OnStartClient();
 
-            // Fresh connection (no data).
+            StartCoroutine(OnStartClientCoroutine());
+        }
+
+        // Wait for one frame to ensure other systems don't change the scene or 
+        // modify anything related to the configuration (e.g. load new scene on client when server resets). 
+        // This ensures we are not sending empty data in vain.
+        private IEnumerator OnStartClientCoroutine()
+        {
+            yield return null; // Wait one frame.
+
+            // Fresh connection (Client has no data).
             if(_cachedServerStartTime == default)
             {
                 if(this.DebugLog) Debug.Log("a. Client connected first time to the server.");
                 ResetEntryID();
             }
-            // Server reset (client stays on but server restarts).
+            // Server reset (when client stays on but server restarts).
             else if(_cachedServerStartTime != NetworkGlobalTimer.Instance.ServerStartTime)
             {
                 if(this.DebugLog) Debug.Log("c. Server reset detected.");
                 ResetAllData();
                 ResetEntryID();
             }
-            // Client reconnection (has data, client disconnects but server stays on).
+            // Client reconnection (when client disconnects but server stays on. Client has data).
             else if(this.TotalTime > 0)
             {
                 if(this.DebugLog) Debug.Log("b. Client reconnection detected.");
@@ -90,8 +101,7 @@ namespace UniVRseDashboardIntegration
             _cachedServerStartTime = NetworkGlobalTimer.Instance.ServerStartTime;
 
             // Send an initial entry to the server.
-            if(_sendOnStartClient)
-                SendAnalyticsEntryToServer();
+            if(_sendOnStartClient) SendAnalyticsEntryToServer();
 
             // Repeatedly send updates to the server.
             if(_sendAtTimeInterval)
