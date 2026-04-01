@@ -3,6 +3,7 @@ using Mirror;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using MirrorUtils;
+using System;
 
 namespace UniVRseDashboardIntegration
 {
@@ -37,6 +38,9 @@ namespace UniVRseDashboardIntegration
         [Header("Debug")]
         [SerializeField] protected bool DebugLog = true;
 
+        // SyncVars.
+        [SyncVar(hook = nameof(OnServerStartTimeChangedHook))] private DateTime _serverStartTime; // The time at which the server started. Useful for detecting server resets. 
+
         // Mandatory fields.
         protected float TotalTime;
 
@@ -67,11 +71,26 @@ namespace UniVRseDashboardIntegration
         ///     - Client must clear all data on reconnection → Server creates new entry with fresh mapping
         ///     (Prevents old data being duplicated in new cloud entry)
         /// </summary>
+        
+
+        #region SyncVar Hooks
+        private void OnServerStartTimeChangedHook(DateTime oldTime, DateTime newTime)
+        {
+            Debug.Log($"Server start time changed. Old: {oldTime}, New: {newTime}. Might be a good time to reset data on the client.");
+        }
+        #endregion
+
+        public override void OnStartServer()
+        {
+            base.OnStartServer();
+            _serverStartTime = DateTime.Now;
+        }
 
         public override void OnStartClient()
         {
             base.OnStartClient();
 
+            Debug.Log("OnStartClient");
             Debug.Log($"NetworkGlobalTimer - local: {NetworkGlobalTimer.Instance.LocalTime}");
             Debug.Log($"NetworkGlobalTimer - server: {NetworkGlobalTimer.Instance.GlobalTime}");
             Debug.Log($"Mirror - local: {NetworkTime.localTime}");
