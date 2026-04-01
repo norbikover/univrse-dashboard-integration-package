@@ -76,6 +76,15 @@ namespace UniVRseDashboardIntegration
         #region SyncVar Hooks
         private void OnServerStartTimeChangedHook(DateTime oldTime, DateTime newTime)
         {
+            // Reconnection detection.
+            if(oldTime == default && this.DebugLog)
+                Debug.Log("a. Client connected first time to the server.");
+            else if(this.DebugLog)
+                Debug.Log("c. Server reset detected.");
+
+             if(this.DebugLog) 
+                Debug.Log("a/c. Client will reset all data and server will reset clientId-cloudId mapping.");
+
             // When server time changes it means:
             // a. Client connected first time to the server.
             // c. Server reset (server closed and reopened while client stayed active).
@@ -83,9 +92,6 @@ namespace UniVRseDashboardIntegration
             // remove the entryID-deviceID mapping on the server to push a new entry to the cloud.
             ResetAllData();
             ResetEntryID();
-
-            if(this.DebugLog) 
-                Debug.Log("a/c. Server reset detected (client remained active while server reopened or client simply connected to the server first time). Client will reset all data.");
         }
         #endregion
 
@@ -99,7 +105,6 @@ namespace UniVRseDashboardIntegration
         {
             base.OnStartClient();
 
-            // Reconnection detection.
             if(this.TotalTime > 0 && this.DebugLog)
                 Debug.Log("b. Client reconnection detected.");
 
