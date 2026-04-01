@@ -3,6 +3,7 @@ using Mirror;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 using System;
+using MirrorUtils;
 
 namespace UniVRseDashboardIntegration
 {
@@ -28,11 +29,11 @@ namespace UniVRseDashboardIntegration
         [Header("Debug")]
         [SerializeField] protected bool DebugLog = true;
 
-        // SyncVars.
-        [SyncVar(hook = nameof(OnServerStartTimeChangedHook))] private DateTime _serverStartTime; // The time at which the server started. Useful for detecting server resets. 
-
         // Mandatory fields.
         protected float TotalTime;
+
+        // Server reset.
+        private DateTime _cachedServerStartTime; // Used to detect server resets on the client side.
 
         // Activity tracking.
         private float _inactivityTimer = 0f;
@@ -62,42 +63,31 @@ namespace UniVRseDashboardIntegration
         ///     - Server creates new entry with fresh mapping
         ///     (Prevents old data being duplicated in new cloud entry)
         /// </summary>
-        
-
-        #region SyncVar Hooks
-        private void OnServerStartTimeChangedHook(DateTime oldTime, DateTime newTime)
-        {
-            // Reconnection detection.
-            if(oldTime == default && this.DebugLog)
-                Debug.Log("a. Client connected first time to the server.");
-            else if(this.DebugLog)
-                Debug.Log("c. Server reset detected.");
-
-             if(this.DebugLog) 
-                Debug.Log("a/c. Client will reset all data and server will reset clientId-cloudId mapping.");
-
-            // When server time changes it means:
-            // a. Client connected first time to the server.
-            // c. Server reset (server closed and reopened while client stayed active).
-            // In all cases we want to reset the local data on the client and
-            // remove the entryID-deviceID mapping on the server to push a new entry to the cloud.
-            ResetAllData();
-            ResetEntryID();
-        }
-        #endregion
-
-        public override void OnStartServer()
-        {
-            base.OnStartServer();
-            _serverStartTime = DateTime.Now;
-        }
 
         public override void OnStartClient()
         {
             base.OnStartClient();
 
-            if(this.TotalTime > 0 && this.DebugLog)
-                Debug.Log("b. Client reconnection detected.");
+            // Fresh connection (no data).
+            if(_cachedServerStartTime == default)
+            {
+                if(this.DebugLog) Debug.Log("a. Client connected first time to the server.");
+                ResetEntryID();
+            }
+            // Server reset (client stays on but server restarts).
+            else if(_cachedServerStartTime != NetworkGlobalTimer.Instance.ServerStartTime)
+            {
+                if(this.DebugLog) Debug.Log("c. Server reset detected.");
+                ResetAllData();
+                ResetEntryID();
+            }
+            // Client reconnection (has data, client disconnects but server stays on).
+            else if(this.TotalTime > 0)
+            {
+                if(this.DebugLog) Debug.Log("b. Client reconnection detected.");
+            }
+
+            _cachedServerStartTime = NetworkGlobalTimer.Instance.ServerStartTime;
 
             // Send an initial entry to the server.
             if(_sendOnStartClient)
