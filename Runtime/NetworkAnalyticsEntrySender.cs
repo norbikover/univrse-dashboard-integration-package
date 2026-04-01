@@ -2,7 +2,6 @@ using UnityEngine;
 using Mirror;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using MirrorUtils;
 using System;
 
 namespace UniVRseDashboardIntegration
@@ -57,18 +56,19 @@ namespace UniVRseDashboardIntegration
         /// Client-first analytics approach: client sends data to server, which forwards it to the cloud.
         /// 
         /// Scenarios:
-        /// a) Normal flow: Server opens → Client connects (no data) → Client sends data → Server pushes to cloud
+        /// a) Normal flow: Server is open -> Client connects (no data)
+        ///     - Server resets clientId-cloudId mapping (if any)
+        ///     - New cloud entry created with new mapping
+        ///     - Client sends empty data and server pushes to new entry in the cloud.
+        ///     (Prevents overwriting data on the cloud with previous mappings still stored on the server)
         /// 
-        /// b) Reconnection: Server stays open → Client reconnects with existing data → Server updates 
-        ///     existing cloud entry (using clientId-cloudId mapping)
+        /// b) Client Reconnection: Server stays open -> Client reconnects with existing data
+        ///     - Server updates existing cloud entry (using clientId-cloudId mapping)
+        ///     (Prevents multiple entries for the same session and allows clients to keep sending data to the same cloud entry when not closing the game)
         /// 
-        /// c) Client reset: Server stays open → Client closes then reconnects with no data (TotalTime == 0)
-        ///     - Server resets clientId-cloudId mapping → New cloud entry created
-        ///     (Prevents overwriting cloud data with empty data)
-        ///     (silimar to a, but we also remove the mapping on the server)
-        /// 
-        /// d) Server reset: Server closes → Client stays running with data (LocalTime > GlobalTime)
-        ///     - Client must clear all data on reconnection → Server creates new entry with fresh mapping
+        /// c) Server reset: Server closes → Client stays running with data
+        ///     - Client must clear all data
+        ///     - Server creates new entry with fresh mapping
         ///     (Prevents old data being duplicated in new cloud entry)
         /// </summary>
         
@@ -76,7 +76,16 @@ namespace UniVRseDashboardIntegration
         #region SyncVar Hooks
         private void OnServerStartTimeChangedHook(DateTime oldTime, DateTime newTime)
         {
-            Debug.Log($"[NAES] Server start time changed. Old: {oldTime}, New: {newTime}. Might be a good time to reset data on the client.");
+            // When server time changes it means:
+            // a. Client connected first time to the server.
+            // c. Server reset (server closed and reopened while client stayed active).
+            // In all cases we want to reset the local data on the client and
+            // remove the entryID-deviceID mapping on the server to push a new entry to the cloud.
+            ResetAllData();
+            ResetEntryID();
+
+            if(this.DebugLog) 
+                Debug.Log("a/c. Server reset detected (client remained active while server reopened or client simply connected to the server first time). Client will reset all data.");
         }
         #endregion
 
@@ -90,28 +99,9 @@ namespace UniVRseDashboardIntegration
         {
             base.OnStartClient();
 
-            Debug.Log("[NAES] OnStartClient");
-            Debug.Log($"[NAES] NetworkGlobalTimer - local: {NetworkGlobalTimer.Instance.LocalTime}");
-            Debug.Log($"[NAES] NetworkGlobalTimer - server: {NetworkGlobalTimer.Instance.GlobalTime}");
-            Debug.Log($"[NAES] Mirror - local: {NetworkTime.localTime}");
-            Debug.Log($"[NAES] Mirror - server: {NetworkTime.time}");
-            Debug.Log($"[NAES] Mirror - offset: {NetworkTime.offset}");
-
-            // c. In case the client is a new one (no reconnection) we want to make sure the server pushes to a new entry id in the cloud.
-            if(this.TotalTime == 0)
-            {
-                Debug.Log("[NAES] a/c. Fresh client detected. Server will reset the entryID mapping.");
-                ResetEntryID();
-            }
-            else if(NetworkGlobalTimer.Instance.LocalTime > NetworkGlobalTimer.Instance.GlobalTime)
-            {
-                Debug.Log("[NAES] d. Server reset detected (client remained active while server changed). Client will reset all data.");
-                ResetAllData();
-            }
-            else
-            {
-                Debug.Log("[NAES] b. Reconnection detected. Client will keep existing data and server will update the existing cloud entry.");
-            }
+            // Reconnection detection.
+            if(this.TotalTime > 0 && this.DebugLog)
+                Debug.Log("b. Client reconnection detected.");
 
             // Send an initial entry to the server.
             if(_sendOnStartClient)
