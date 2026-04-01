@@ -53,7 +53,7 @@ namespace UniVRseDashboardIntegration
             // If the client has sent another entry before it should have a mapping in the dictionary such that we can update the existing entry from the database instead of pusing a new one.
             string senderEntryID = _entriesIDS.ContainsKey(deviceId) ? _entriesIDS[deviceId] : string.Empty;
 
-            if (this._debugLog) Debug.Log($"Received Analytics Entry data from a client.\nDevice ID: {deviceId}, Total Time: {totalTime}, Data: {data.ToString()} Update Existing Entry: {!string.IsNullOrEmpty(senderEntryID)}.");
+            if (this._debugLog) Debug.Log($"Received Analytics Entry data from a client.\nDevice ID: {deviceId}, Total Time: {totalTime} Update Existing Entry: {!string.IsNullOrEmpty(senderEntryID)}.");
 
             // Return in case no license code was previously provided (most probably DEV build).
             if (string.IsNullOrEmpty(LicenseStaticReferences.LicenseCode))
