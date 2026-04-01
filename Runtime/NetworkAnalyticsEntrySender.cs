@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System;
 using MirrorUtils;
-using System.Collections;
 
 namespace UniVRseDashboardIntegration
 {
