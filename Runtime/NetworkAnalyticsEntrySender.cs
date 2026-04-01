@@ -53,34 +53,49 @@ namespace UniVRseDashboardIntegration
         /// Client-first analytics approach: client sends data to server, which forwards it to the cloud.
         /// 
         /// Scenarios:
-        /// a) Normal flow: Server opens → Client connects → Client sends data → Server pushes to cloud
+        /// a) Normal flow: Server opens → Client connects (no data) → Client sends data → Server pushes to cloud
         /// 
         /// b) Reconnection: Server stays open → Client reconnects with existing data → Server updates 
-        ///    existing cloud entry (using clientId-cloudId mapping)
+        ///     existing cloud entry (using clientId-cloudId mapping)
         /// 
         /// c) Client reset: Server stays open → Client closes then reconnects with no data (TotalTime == 0)
-        ///    → Server resets clientId-cloudId mapping → New cloud entry created
-        ///    (Prevents overwriting cloud data with empty data)
+        ///     - Server resets clientId-cloudId mapping → New cloud entry created
+        ///     (Prevents overwriting cloud data with empty data)
+        ///     (silimar to a, but we also remove the mapping on the server)
         /// 
         /// d) Server reset: Server closes → Client stays running with data (LocalTime > GlobalTime)
-        ///    → Client must clear all data on reconnection → Server creates new entry with fresh mapping
-        ///    (Prevents old data being duplicated in new cloud entry)
+        ///     - Client must clear all data on reconnection → Server creates new entry with fresh mapping
+        ///     (Prevents old data being duplicated in new cloud entry)
         /// </summary>
 
         public override void OnStartClient()
         {
             base.OnStartClient();
 
+            Debug.Log($"NetworkGlobalTimer - local: {NetworkGlobalTimer.Instance.LocalTime}");
+            Debug.Log($"NetworkGlobalTimer - server: {NetworkGlobalTimer.Instance.GlobalTime}");
+            Debug.Log($"Mirror - local: {NetworkTime.localTime}");
+            Debug.Log($"Mirror - server: {NetworkTime.time}");
+            Debug.Log($"Mirror - offset: {NetworkTime.offset}");
+
             // c. In case the client is a new one (no reconnection) we want to make sure the server pushes to a new entry id in the cloud.
             if(this.TotalTime == 0)
+            {
+                Debug.Log("a/c. Fresh client detected. Server will reset the entryID mapping.");
                 ResetEntryID();
-
-            // d. In case the server was closed but the client still has some data, we want to reset it.
-            if(NetworkGlobalTimer.Instance.LocalTime > NetworkGlobalTimer.Instance.GlobalTime)
+            }
+            else if(NetworkGlobalTimer.Instance.LocalTime > NetworkGlobalTimer.Instance.GlobalTime)
+            {
+                Debug.Log("d. Server reset detected (client remained active while server changed). Client will reset all data.");
                 ResetAllData();
+            }
+            else
+            {
+                Debug.Log("b. Reconnection detected. Client will keep existing data and server will update the existing cloud entry.");
+            }
 
             // Send an initial entry to the server.
-            if(_sendOnStartClient) 
+            if(_sendOnStartClient)
                 SendAnalyticsEntryToServer();
 
             // Repeatedly send updates to the server.
