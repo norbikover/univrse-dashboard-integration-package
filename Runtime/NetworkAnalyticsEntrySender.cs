@@ -76,7 +76,7 @@ namespace UniVRseDashboardIntegration
         #region SyncVar Hooks
         private void OnServerStartTimeChangedHook(DateTime oldTime, DateTime newTime)
         {
-            Debug.Log($"Server start time changed. Old: {oldTime}, New: {newTime}. Might be a good time to reset data on the client.");
+            Debug.Log($"[NAES] Server start time changed. Old: {oldTime}, New: {newTime}. Might be a good time to reset data on the client.");
         }
         #endregion
 
@@ -90,27 +90,27 @@ namespace UniVRseDashboardIntegration
         {
             base.OnStartClient();
 
-            Debug.Log("OnStartClient");
-            Debug.Log($"NetworkGlobalTimer - local: {NetworkGlobalTimer.Instance.LocalTime}");
-            Debug.Log($"NetworkGlobalTimer - server: {NetworkGlobalTimer.Instance.GlobalTime}");
-            Debug.Log($"Mirror - local: {NetworkTime.localTime}");
-            Debug.Log($"Mirror - server: {NetworkTime.time}");
-            Debug.Log($"Mirror - offset: {NetworkTime.offset}");
+            Debug.Log("[NAES] OnStartClient");
+            Debug.Log($"[NAES] NetworkGlobalTimer - local: {NetworkGlobalTimer.Instance.LocalTime}");
+            Debug.Log($"[NAES] NetworkGlobalTimer - server: {NetworkGlobalTimer.Instance.GlobalTime}");
+            Debug.Log($"[NAES] Mirror - local: {NetworkTime.localTime}");
+            Debug.Log($"[NAES] Mirror - server: {NetworkTime.time}");
+            Debug.Log($"[NAES] Mirror - offset: {NetworkTime.offset}");
 
             // c. In case the client is a new one (no reconnection) we want to make sure the server pushes to a new entry id in the cloud.
             if(this.TotalTime == 0)
             {
-                Debug.Log("a/c. Fresh client detected. Server will reset the entryID mapping.");
+                Debug.Log("[NAES] a/c. Fresh client detected. Server will reset the entryID mapping.");
                 ResetEntryID();
             }
             else if(NetworkGlobalTimer.Instance.LocalTime > NetworkGlobalTimer.Instance.GlobalTime)
             {
-                Debug.Log("d. Server reset detected (client remained active while server changed). Client will reset all data.");
+                Debug.Log("[NAES] d. Server reset detected (client remained active while server changed). Client will reset all data.");
                 ResetAllData();
             }
             else
             {
-                Debug.Log("b. Reconnection detected. Client will keep existing data and server will update the existing cloud entry.");
+                Debug.Log("[NAES] b. Reconnection detected. Client will keep existing data and server will update the existing cloud entry.");
             }
 
             // Send an initial entry to the server.
