@@ -11,13 +11,7 @@ namespace UniVRseDashboardIntegration
     {
         #region Singleton Pattern
         private static AnalyticsEntryManager _instance;
-        public static AnalyticsEntryManager Instance
-        {
-            get
-            {
-                return _instance != null ? _instance : _instance = FindAnyObjectByType<AnalyticsEntryManager>();
-            }
-        }
+        public static AnalyticsEntryManager Instance => _instance != null ? _instance : _instance = FindAnyObjectByType<AnalyticsEntryManager>();
         #endregion
 
         [Header("Settings")]

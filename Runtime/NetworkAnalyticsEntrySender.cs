@@ -69,16 +69,6 @@ namespace UniVRseDashboardIntegration
         {
             base.OnStartClient();
 
-            StartCoroutine(OnStartClientCoroutine());
-        }
-
-        // Wait for one frame to ensure other systems don't change the scene or 
-        // modify anything related to the configuration (e.g. load new scene on client when server resets). 
-        // This ensures we are not sending empty data in vain.
-        private IEnumerator OnStartClientCoroutine()
-        {
-            yield return null; // Wait one frame.
-
             // Fresh connection (Client has no data).
             if(_cachedServerStartTime == default)
             {
