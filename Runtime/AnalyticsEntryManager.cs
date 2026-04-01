@@ -46,10 +46,12 @@ namespace UniVRseDashboardIntegration
 
         public async void SendAnalyticsEntryToCloud(string deviceId, float totalTime, Dictionary<string, object> data)
         {
+            if(_debugLog) Debug.Log($"Received analytics entry to push. Device ID: {deviceId}, Total Time: {totalTime}, Data: {data}");
+
             // Return in case no license code was previously provided (most probably DEV build).
             if (string.IsNullOrEmpty(LicenseStaticReferences.LicenseCode))
             {
-                Debug.Log("Cannot push analytics to the cloud without a License Code.");
+                if(_debugLog) Debug.Log("Cannot push analytics to the cloud without a License Code.");
                 return;
             }
             
@@ -76,7 +78,7 @@ namespace UniVRseDashboardIntegration
                     data: analyticsEntry,
                     serverUrl: Constants.API_ENDPOINT);
 
-                Debug.Log($"Entry sent successfully to the cloud: {response}");
+                if(_debugLog) Debug.Log($"Entry sent successfully to the cloud: {response}");
 
                 string entryCloudID = response.Trim('"');
 
@@ -89,7 +91,7 @@ namespace UniVRseDashboardIntegration
             }
             catch (Exception ex)
             {
-                Debug.Log($"Failed to send entry to the cloud. Storing the document locally. Error: {ex.Message}");
+                if(_debugLog) Debug.Log($"Failed to send entry to the cloud. Storing the document locally. Error: {ex.Message}");
 
                 // If there's an error, store the entry locally.
                 if (_storeErrorDocumentsLocally)
@@ -121,7 +123,7 @@ namespace UniVRseDashboardIntegration
                         data: analyticsEntry,
                         serverUrl: Constants.API_ENDPOINT);
 
-                    Debug.Log($"Local entry sent successfully to the cloud: {response}");
+                    if(_debugLog) Debug.Log($"Local entry sent successfully to the cloud: {response}");
 
                     string entryCloudID = response.Trim('"');
 
@@ -133,7 +135,7 @@ namespace UniVRseDashboardIntegration
                 }
                 catch (Exception ex)
                 {
-                    Debug.Log($"Failed to send entry to the cloud. Document is already stored locally. Error: {ex.Message}");
+                    if(_debugLog) Debug.Log($"Failed to send entry to the cloud. Document is already stored locally. Error: {ex.Message}");
                 }
             }
         }
