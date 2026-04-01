@@ -4,6 +4,7 @@ using System.IO;
 using System;
 using HttpIntegration;
 using Utilities;
+using UnityEngine.UIElements;
 
 namespace UniVRseDashboardIntegration
 {
@@ -46,16 +47,21 @@ namespace UniVRseDashboardIntegration
 
         public async void SendAnalyticsEntryToCloud(string deviceId, float totalTime, Dictionary<string, object> data)
         {
+            // Store the device name (if any).
+            string deviceName = DeviceMappingSystem.Instance.GetDeviceName(deviceId);
+
+            // If the client has sent another entry before it should have a mapping in the dictionary such that we can update the existing entry from the database instead of pusing a new one.
+            string senderEntryID = _entriesIDS.ContainsKey(deviceId) ? _entriesIDS[deviceId] : string.Empty;
+
+            if (this._debugLog) Debug.Log($"Received Analytics Entry data from a client.\nDevice ID: {deviceId}, Total Time: {totalTime}, Data: {data.ToString()} Update Existing Entry: {!string.IsNullOrEmpty(senderEntryID)}.");
+
             // Return in case no license code was previously provided (most probably DEV build).
             if (string.IsNullOrEmpty(LicenseStaticReferences.LicenseCode))
             {
                 if(_debugLog) Debug.Log("Cannot push analytics to the cloud without a License Code.");
                 return;
             }
-            
-            // Store the device name (if any).
-            string deviceName = DeviceMappingSystem.Instance.GetDeviceName(deviceId);
-
+        
             // Prepare the analytics entry.
             AnalyticsEntry analyticsEntry = new AnalyticsEntry(
                 licenseCode: LicenseStaticReferences.LicenseCode,
@@ -64,9 +70,6 @@ namespace UniVRseDashboardIntegration
                 version: Application.version,
                 data: data
             );
-
-            // If the client has sent another entry before it should have a mapping in the dictionary such that we can update the existing entry from the database instead of pusing a new one.
-            string senderEntryID = _entriesIDS.ContainsKey(deviceId) ? _entriesIDS[deviceId] : "";
 
             try
             {

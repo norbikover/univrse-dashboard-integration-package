@@ -144,8 +144,6 @@ namespace UniVRseDashboardIntegration
         [Command(requiresAuthority = false)]
         protected void CmdPushAnalyticsEntry(string deviceId, float totalTime, string dataJson)
         {
-            if (this.DebugLog) Debug.Log($"[Server] Received Analytics Entry data from a client. Device ID: {deviceId}, Total Time: {totalTime}, Data: {dataJson}. Pushing it to the cloud ....");
-
             // Send the entry's data to the cloud.
             AnalyticsEntryManager.Instance.SendAnalyticsEntryToCloud(deviceId, totalTime, JsonConvert.DeserializeObject<Dictionary<string, object>>(dataJson));
         }
