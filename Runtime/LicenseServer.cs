@@ -26,7 +26,7 @@ namespace UniVRseDashboardIntegration
         private string _appVersion = string.Empty;
 
         // The default behaviour is to automatically switch to license client on Android standalone VR builds.
-        protected virtual bool IsAutomaticLicenseClientSwitchAllowed() => PlatformChecks.IsStandaloneVR();
+        protected virtual bool IsAutomaticLicenseClientSwitchAllowed() => PlatformChecks.IsStandaloneVRBuild();
 
         private void Start()
         {
