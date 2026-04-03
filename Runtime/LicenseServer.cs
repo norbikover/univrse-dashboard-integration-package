@@ -33,6 +33,10 @@ namespace UniVRseDashboardIntegration
                 return;
             }
 
+            // Reset static license references.
+            LicenseStaticReferences.LicenseCode = string.Empty;
+            LicenseStaticReferences.LicenseEnvironment = ELicenseEnvironment.DEV;
+
             _appVersion = Application.version;
 
             // Auto populate the license code.
