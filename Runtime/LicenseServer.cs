@@ -8,6 +8,7 @@ using HttpIntegration;
 using LANHelpers;
 using NaughtyAttributes;
 using Utilities;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace UniVRseDashboardIntegration
 {
@@ -26,11 +27,11 @@ namespace UniVRseDashboardIntegration
         private string _appVersion = string.Empty;
 
         // The default behaviour is to automatically switch to license client on Android standalone VR builds.
-        protected virtual bool SwitchToLicenseClient() => PlatformChecks.IsStandaloneVRBuild();
+        protected virtual bool SwitchToLicenseClient => false;
 
         private void Start()
         {
-            if (SwitchToLicenseClient())
+            if (SwitchToLicenseClient)
             {
                 LoadScene(_licenseClientScene);
                 return;
