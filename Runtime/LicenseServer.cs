@@ -7,8 +7,6 @@ using UnityEngine.UI;
 using HttpIntegration;
 using LANHelpers;
 using NaughtyAttributes;
-using Utilities;
-using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace UniVRseDashboardIntegration
 {

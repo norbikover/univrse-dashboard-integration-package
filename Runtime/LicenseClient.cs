@@ -15,18 +15,28 @@ namespace UniVRseDashboardIntegration
     public class LicenseClient : MonoBehaviour
     {
         [Header("References")]
+        [SerializeField, Scene] private string _licenseServerScene;
         [SerializeField, Scene] private string _sceneToLoad;
-        [SerializeField] private TMP_Text _mainText;
-        [SerializeField] private TMP_Text _errorText;
+        [SerializeField] private TMP_Text[] _mainTexts;
+        [SerializeField] private TMP_Text[] _errorTexts;
 
         // Private variables.
         private bool _validServerFound = false;
         private bool _loadingScene = false;
 
+        // Overridable properties.
+        protected virtual bool SwitchToLicenseServerOnLoad => false;
+
         private void Start()
         {
+            if (SwitchToLicenseServerOnLoad)
+            {
+                LoadScene(_licenseServerScene);
+                return;
+            }
+
             // Clear the error text.
-            if(_errorText) _errorText.text = "";
+            UpdateTexts(_errorTexts, "");
 
             // Start searching for servers.
             LANDiscovery.Instance.OnServerFound += OnServerFound;
@@ -40,7 +50,7 @@ namespace UniVRseDashboardIntegration
 
             try
             {
-                if(_errorText) _errorText.text = "";
+                UpdateTexts(_errorTexts, "");
 
                 string licenseJson = await HttpService.Instance.SendRequestAsync(
                     postfix: "/license",
@@ -64,7 +74,7 @@ namespace UniVRseDashboardIntegration
             catch (Exception ex)
             {
                 _validServerFound = false;
-                if(_errorText)_errorText.text = ex.Message;
+                UpdateTexts(_errorTexts, ex.Message);
             }
         }
 
@@ -73,13 +83,21 @@ namespace UniVRseDashboardIntegration
             if (_loadingScene) return;
             _loadingScene = true;
 
-            if(_mainText) _mainText.text = "Loading scene...";
+            UpdateTexts(_mainTexts, "Loading scene...");
             SceneManager.LoadSceneAsync(sceneName);
         }
 
         public void SkipLicenseChecking()
         {
             LoadScene(_sceneToLoad);
+        }
+
+        private void UpdateTexts(TMP_Text[] texts, string message)
+        {
+            foreach (TMP_Text text in texts)
+            {
+                if (text != null) text.text = message;
+            }
         }
 
         private void OnDestroy()
