@@ -26,12 +26,12 @@ namespace UniVRseDashboardIntegration
         private bool _loadingScene = false;
         private string _appVersion = string.Empty;
 
-        // The default behaviour is to automatically switch to license client on Android standalone VR builds.
-        protected virtual bool SwitchToLicenseClient => false;
+        // Overridable properties.
+        protected virtual bool SwitchToLicenseClientOnLoad => false;
 
         private void Start()
         {
-            if (SwitchToLicenseClient)
+            if (SwitchToLicenseClientOnLoad)
             {
                 LoadScene(_licenseClientScene);
                 return;
