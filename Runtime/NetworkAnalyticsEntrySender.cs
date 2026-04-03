@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json;
 using System;
 using MirrorUtils;
+using NaughtyAttributes;
 
 namespace UniVRseDashboardIntegration
 {
@@ -20,11 +21,11 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private float _sendInterval = 60f;
 
         [Header("Activity Detection (Optional)")]
-        [SerializeField] private Transform _xrCamera;
-        [SerializeField] private float _positionThreshold = 0.01f;
-        [SerializeField] private float _rotationThreshold = 1f;
-        [SerializeField] private float _inactivityWindowDuration = 300f; // 5 minutes
-        [SerializeField] private bool _stopOnInactivity = true;
+        [SerializeField] private bool _stopWhenInactive = true;
+        [SerializeField, ShowIf("_stopWhenInactive")] private Transform _xrCamera;
+        [SerializeField, ShowIf("_stopWhenInactive")] private float _positionThreshold = 0.01f;
+        [SerializeField, ShowIf("_stopWhenInactive")] private float _rotationThreshold = 1f;
+        [SerializeField, ShowIf("_stopWhenInactive")] private float _inactivityWindowDuration = 300f; // 5 minutes
 
         [Header("Debug")]
         [SerializeField] protected bool DebugLog = true;
@@ -41,8 +42,8 @@ namespace UniVRseDashboardIntegration
         private Quaternion _lastCameraRotation = Quaternion.identity;
 
         // Helpers.
-        protected bool InactivityTrackingEnabled => _xrCamera != null && !Application.isEditor;
-        protected bool IsSessionInactive => this.InactivityTrackingEnabled && _inactivityTimer >= _inactivityWindowDuration;
+        protected bool StopWhenInactive => _stopWhenInactive && !Application.isEditor; // Editor will never count inactivity.
+        protected bool IsSessionInactive => this.StopWhenInactive && _inactivityTimer >= _inactivityWindowDuration;
 
         /// <summary>
         /// Client-first analytics approach: client sends data to server, which forwards it to the cloud.
@@ -103,7 +104,7 @@ namespace UniVRseDashboardIntegration
         [ClientCallback]
         private void CheckForInactivity()
         {
-            if(_xrCamera == null) return;
+            if(_xrCamera == null || !StopWhenInactive) return;
 
             // Check if movement exceeds thresholds.
             bool movementDetected = Vector3.Distance(_xrCamera.position, _lastCameraPosition) > _positionThreshold || 
