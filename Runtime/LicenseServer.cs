@@ -7,7 +7,7 @@ using UnityEngine.UI;
 using HttpIntegration;
 using LANHelpers;
 using NaughtyAttributes;
-using UnityEngine.XR;
+using Utilities;
 
 namespace UniVRseDashboardIntegration
 {
@@ -25,17 +25,16 @@ namespace UniVRseDashboardIntegration
         private bool _loadingScene = false;
         private string _appVersion = string.Empty;
 
+        // The default behaviour is to automatically switch to license client on Android standalone VR builds.
+        protected virtual bool IsAutomaticLicenseClientSwitchAllowed() => PlatformChecks.IsStandaloneVR();
+
         private void Start()
         {
-            if (!Application.isEditor && Application.platform == RuntimePlatform.Android && XRSettings.enabled)
+            if (IsAutomaticLicenseClientSwitchAllowed())
             {
                 LoadScene(_licenseClientScene);
                 return;
             }
-
-            // Reset static license references.
-            LicenseStaticReferences.LicenseCode = string.Empty;
-            LicenseStaticReferences.LicenseEnvironment = ELicenseEnvironment.DEV;
 
             _appVersion = Application.version;
 
@@ -58,6 +57,10 @@ namespace UniVRseDashboardIntegration
             // Check for the SECRET_LICENSE.
             if (Application.isEditor && string.Equals(_licenseField.text, Constants.SECRET_LICENSE))
             {
+                // Set the static license references to DEV values.
+                LicenseStaticReferences.LicenseCode = string.Empty;
+                LicenseStaticReferences.LicenseEnvironment = ELicenseEnvironment.DEV;
+
                 // Start the license server with the DEV environment.
                 LANDiscovery.Instance.StartServer();
                 HttpServer.Instance.StartServer();
