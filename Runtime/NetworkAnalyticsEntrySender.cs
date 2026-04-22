@@ -72,15 +72,14 @@ namespace UniVRseDashboardIntegration
             // Fresh connection (Client has no data).
             if(_cachedServerStartTime == default)
             {
-                if(this.DebugLog) Debug.Log("a. Client connected first time to the server.");
-                ResetEntryID();
+                if(this.DebugLog) Debug.Log("a. Client connected first time to the server. Reset entry ID.");
+                ResetEntryID(); // Server might have data from this device from other sessions.
             }
             // Server reset (when client stays on but server restarts).
             else if(_cachedServerStartTime != NetworkGlobalTimer.Instance.ServerStartTime)
             {
-                if(this.DebugLog) Debug.Log("c. Server reset detected.");
+                if(this.DebugLog) Debug.Log("c. Server reset detected. Reset all data.");
                 ResetAllData();
-                ResetEntryID();
             }
             // Client reconnection (when client disconnects but server stays on. Client has data).
             else if(this.TotalTime > 0)
