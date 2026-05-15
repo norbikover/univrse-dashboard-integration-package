@@ -9,16 +9,8 @@ namespace UniVRseDashboardIntegration
     public class LicenseBackgroundValidator : MonoBehaviour
     {
         #region Singleton Pattern
-
         private static LicenseBackgroundValidator _instance;
-        public static LicenseBackgroundValidator Instance
-        {
-            get
-            {
-                return _instance ?? (_instance = FindAnyObjectByType<LicenseBackgroundValidator>());
-            }
-        }
-
+        public static LicenseBackgroundValidator Instance => _instance != null ? _instance : (_instance = FindAnyObjectByType<LicenseBackgroundValidator>());
         #endregion
 
         [Header("References")]
