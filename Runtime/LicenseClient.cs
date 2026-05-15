@@ -1,5 +1,3 @@
-using System.Net.Sockets;
-using System.Text;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using System;
@@ -7,7 +5,6 @@ using Newtonsoft.Json;
 using TMPro;
 using NaughtyAttributes;
 using LANHelpers;
-using System.Threading.Tasks;
 using HttpIntegration;
 
 namespace UniVRseDashboardIntegration
@@ -17,7 +14,6 @@ namespace UniVRseDashboardIntegration
         [Header("References")]
         [SerializeField, Scene] private string _licenseServerScene;
         [SerializeField, Scene] private string _sceneToLoad;
-        [SerializeField] private TMP_Text[] _mainTexts;
         [SerializeField] private TMP_Text[] _errorTexts;
 
         // Private variables.
@@ -83,7 +79,6 @@ namespace UniVRseDashboardIntegration
             if (_loadingScene) return;
             _loadingScene = true;
 
-            UpdateTexts(_mainTexts, "Loading scene...");
             SceneManager.LoadSceneAsync(sceneName);
         }
 
