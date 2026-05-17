@@ -42,6 +42,7 @@ namespace UniVRseDashboardIntegration
 
         public void StartBackgroundLicenseChecking(string license)
         {
+            if(string.IsNullOrEmpty(license)) return;
             _currentLicense = license;
             CancelInvoke(nameof(ValidateLicense));
             Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
@@ -50,6 +51,26 @@ namespace UniVRseDashboardIntegration
         private async void ValidateLicense()
         {
             if (_isCheckingLicense) return;
+
+            // If offline check for grace period.
+            if(Application.internetReachability == NetworkReachability.NotReachable)
+            {
+                if(Utils.IsWithinOfflineGracePeriod(_currentLicense))
+                {
+                    // In case of success, automatically recheck the license again after the given delay.
+                    SetPopupState(false);
+                    CancelInvoke(nameof(ValidateLicense));
+                    Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
+                }
+                else
+                {
+                    _errorText.text = "No internet connection and offline grace period has expired. Please connect to the internet!";
+                    SetPopupState(true);
+                    CancelInvoke(nameof(ValidateLicense));
+                }
+
+                return;
+            }
 
             _isCheckingLicense = true;
             _errorText.text = "";
@@ -65,33 +86,16 @@ namespace UniVRseDashboardIntegration
                     method: HttpMethod.POST,
                     data: licenseRequest,
                     serverUrl: Constants.API_ENDPOINT);
-
-                // In case of success.
-                if(_popupEnabled)
-                {   
-                    // Disable the canvas.
-                    _popupEnabled = false;
-                    _canvas.SetActive(false);
-                }
                 
                 // Automatically recheck the license again after the given delay.
+                SetPopupState(false);
                 CancelInvoke(nameof(ValidateLicense));
                 Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
             }
             catch (Exception ex) // In case of an error.
             {
-                // Update the error text.
                 _errorText.text = ex.Message;
-
-                // Enable the popup.
-                if(!_popupEnabled)
-                {
-                    _popupEnabled = true;
-                    _canvas.SetActive(true);
-                    _quitTimer = _quitTimeDelay;
-                }
-
-                // Make sure the auto license validation is stopped.
+                SetPopupState(true);
                 CancelInvoke(nameof(ValidateLicense));
             }
 
@@ -122,6 +126,21 @@ namespace UniVRseDashboardIntegration
         private void OnRetryButtonPressed()
         {
             ValidateLicense();
+        }
+
+        private void SetPopupState(bool state)
+        {
+            if(state && !_popupEnabled)
+            {
+                _popupEnabled = true;
+                _canvas.SetActive(true);
+                _quitTimer = _quitTimeDelay;
+            }
+            else if(!state && _popupEnabled)
+            {
+                _popupEnabled = false;
+                _canvas.SetActive(false);
+            }
         }
 
         private void OnDestroy()

@@ -22,7 +22,6 @@ namespace UniVRseDashboardIntegration
         // Private variables.
         private bool _isCheckingLicense = false;
         private bool _loadingScene = false;
-        private string _appVersion = string.Empty;
 
         // Overridable properties.
         protected virtual bool SwitchToLicenseClientOnLoad => false;
@@ -31,11 +30,9 @@ namespace UniVRseDashboardIntegration
         {
             if (SwitchToLicenseClientOnLoad)
             {
-                LoadScene(_licenseClientScene);
+                SceneManager.LoadSceneAsync(_licenseClientScene);
                 return;
             }
-
-            _appVersion = Application.version;
 
             // Auto populate the license code.
             if (PlayerPrefs.HasKey(Constants.LICENSE_CODE_KEY))
@@ -56,19 +53,17 @@ namespace UniVRseDashboardIntegration
             // Check for the SECRET_LICENSE.
             if (Application.isEditor && string.Equals(_licenseField.text, Constants.SECRET_LICENSE))
             {
-                // Set the static license references to DEV values.
-                LicenseStaticReferences.LicenseCode = string.Empty;
-                LicenseStaticReferences.LicenseEnvironment = ELicenseEnvironment.DEV;
+                OnLicenseValidated(string.Empty, ELicenseEnvironment.DEV);
+                return;
+            }
 
-                // Start the license server with the DEV environment.
-                LANDiscovery.Instance.StartServer();
-                HttpServer.Instance.StartServer();
-                HttpServer.Instance.Register("/api/license", async (req) =>
-                {
-                    LicenseMessage licenseMessage = new LicenseMessage(ELicenseEnvironment.DEV, _appVersion);
-                    return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
-                });
-                LoadScene(_sceneToLoad);
+            // If offline, then check for grace period.
+            if(Application.internetReachability == NetworkReachability.NotReachable)
+            {        
+                if(Utils.IsWithinOfflineGracePeriod(_licenseField.text))   
+                    OnLicenseValidated(_licenseField.text, PlayerPrefs.GetString(Constants.LAST_VALIDATION_ENVIRONMENT_KEY).ToEnum<ELicenseEnvironment>());
+                else
+                    _errorText.text = "No internet connection and license is not within the offline grace period. Please connect to the internet!";
                 return;
             }
 
@@ -79,7 +74,7 @@ namespace UniVRseDashboardIntegration
             try
             {
                 // Build the query string from the LicenseRequest object.
-                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, _appVersion);
+                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, Application.version);
 
                 // Perform the license validation request.
                 string responseJson = await HttpService.Instance.SendRequestAsync(
@@ -90,26 +85,14 @@ namespace UniVRseDashboardIntegration
 
                 // Deserialize the response JSON into a LicenseResponse object.
                 LicenseResponse licenseResponse = JsonConvert.DeserializeObject<LicenseResponse>(responseJson);
-
-                // Store the used license code.
-                LicenseStaticReferences.LicenseCode = _licenseField.text;
-                LicenseStaticReferences.LicenseEnvironment = licenseResponse.environment.ToEnum<ELicenseEnvironment>();
-                PlayerPrefs.SetString(Constants.LICENSE_CODE_KEY, _licenseField.text); // Store the used license code such that we can autopopulate it next time.       
-
-                // Register the http server path.
-                LANDiscovery.Instance.StartServer();
-                HttpServer.Instance.StartServer();
-                HttpServer.Instance.Register("/api/license", async (req) =>
-                {
-                    LicenseMessage licenseMessage = new LicenseMessage(licenseResponse.environment.ToEnum<ELicenseEnvironment>(), _appVersion);
-                    return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
-                });
-
-                // Start the background license validation process.
-                LicenseBackgroundValidator.Instance.StartBackgroundLicenseChecking(_licenseField.text);
+                
+                // Store the license validation data for offline usage.
+                PlayerPrefs.SetString(Constants.LICENSE_CODE_KEY, _licenseField.text);
+                PlayerPrefs.SetString(Constants.LAST_VALIDATION_TIME_KEY, DateTime.UtcNow.ToString());
+                PlayerPrefs.SetString(Constants.LAST_VALIDATION_ENVIRONMENT_KEY, licenseResponse.environment);      
 
                 // Load the assigned scene.
-                LoadScene(_sceneToLoad);
+                OnLicenseValidated(_licenseField.text, licenseResponse.environment.ToEnum<ELicenseEnvironment>());
             }
             catch (Exception ex)
             {
@@ -120,12 +103,28 @@ namespace UniVRseDashboardIntegration
             _isCheckingLicense = false;
         }
 
-        private void LoadScene(string sceneName)
+        private void OnLicenseValidated(string license, ELicenseEnvironment environment)
         {
             if (_loadingScene) return;
+            
+            // Store the used license code.
+            LicenseStaticReferences.LicenseCode = license;
+            LicenseStaticReferences.LicenseEnvironment = environment;
+
+            // Start the license server.
+            LANDiscovery.Instance.StartServer();
+            HttpServer.Instance.StartServer();
+            HttpServer.Instance.Register("/api/license", async (req) =>
+            {
+                LicenseMessage licenseMessage = new LicenseMessage(environment, Application.version);
+                return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
+            });
+
+            // Start the background license validation process.
+            LicenseBackgroundValidator.Instance.StartBackgroundLicenseChecking(_licenseField.text);
 
             _loadingScene = true;
-            SceneManager.LoadSceneAsync(sceneName);
+            SceneManager.LoadSceneAsync(_sceneToLoad);
         }
     
         private void OnDestroy()
