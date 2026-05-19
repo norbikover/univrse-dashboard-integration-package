@@ -19,6 +19,7 @@ namespace UniVRseDashboardIntegration
         // Private variables.
         private bool _validServerFound = false;
         private bool _loadingScene = false;
+        private string _appVersion;
 
         // Overridable properties.
         protected virtual bool SwitchToLicenseServerOnLoad => false;
@@ -33,6 +34,9 @@ namespace UniVRseDashboardIntegration
 
             // Clear the error text.
             UpdateTexts(_errorTexts, "");
+
+            // Store the application version.
+            _appVersion = Application.version;
 
             // Start searching for servers.
             LANDiscovery.Instance.OnServerFound += OnServerFound;
@@ -57,7 +61,7 @@ namespace UniVRseDashboardIntegration
                 LicenseMessage licenseMessage = JsonConvert.DeserializeObject<LicenseMessage>(licenseJson);
 
                 // Return in case the server has a different version than the client.
-                if (licenseMessage.AppVersion != Application.version) throw new Exception($"A server was found but the versions do not match. Server version: {licenseMessage.AppVersion}; Client version: {Application.version}");
+                if (licenseMessage.AppVersion != _appVersion) throw new Exception($"A server was found but the versions do not match. Server version: {licenseMessage.AppVersion}; Client version: {_appVersion}");
 
                 // Update the license static references environment such that the client can use it too.
                 LicenseStaticReferences.LicenseEnvironment = licenseMessage.Environment;

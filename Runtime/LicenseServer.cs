@@ -22,6 +22,7 @@ namespace UniVRseDashboardIntegration
         // Private variables.
         private bool _isCheckingLicense = false;
         private bool _loadingScene = false;
+        private string _appVersion;
 
         // Overridable properties.
         protected virtual bool SwitchToLicenseClientOnLoad => false;
@@ -37,6 +38,9 @@ namespace UniVRseDashboardIntegration
             // Auto populate the license code.
             if (PlayerPrefs.HasKey(Constants.LICENSE_CODE_KEY))
                 _licenseField.text = PlayerPrefs.GetString(Constants.LICENSE_CODE_KEY);
+
+            // Store the application version.
+            _appVersion = Application.version;
 
             // Reset the error text.
             _errorText.text = "";
@@ -74,7 +78,7 @@ namespace UniVRseDashboardIntegration
             try
             {
                 // Build the query string from the LicenseRequest object.
-                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, Application.version);
+                LicenseRequest licenseRequest = new LicenseRequest(_licenseField.text, Constants.APP_ID, _appVersion);
 
                 // Perform the license validation request.
                 string responseJson = await HttpService.Instance.SendRequestAsync(
@@ -116,7 +120,7 @@ namespace UniVRseDashboardIntegration
             HttpServer.Instance.StartServer();
             HttpServer.Instance.Register("/api/license", async (req) =>
             {
-                LicenseMessage licenseMessage = new LicenseMessage(environment, Application.version);
+                LicenseMessage licenseMessage = new LicenseMessage(environment, _appVersion);
                 return new HttpResponse(200, JsonConvert.SerializeObject(licenseMessage));
             });
 
