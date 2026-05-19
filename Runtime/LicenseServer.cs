@@ -7,6 +7,7 @@ using UnityEngine.UI;
 using HttpIntegration;
 using LANHelpers;
 using NaughtyAttributes;
+using NUnit.Framework.Constraints;
 
 namespace UniVRseDashboardIntegration
 {
@@ -61,16 +62,6 @@ namespace UniVRseDashboardIntegration
                 return;
             }
 
-            // If offline, then check for grace period.
-            if(Application.internetReachability == NetworkReachability.NotReachable)
-            {        
-                if(Utils.IsWithinOfflineGracePeriod(_licenseField.text))   
-                    OnLicenseValidated(_licenseField.text, PlayerPrefs.GetString(Constants.LAST_VALIDATION_ENVIRONMENT_KEY).ToEnum<ELicenseEnvironment>());
-                else
-                    _errorText.text = "No internet connection and license is not within the offline grace period. Please connect to the internet!";
-                return;
-            }
-
             // Set the checking license to true and reset the error text.
             _isCheckingLicense = true;
             _errorText.text = "Validating ...";
@@ -97,6 +88,13 @@ namespace UniVRseDashboardIntegration
 
                 // Load the assigned scene.
                 OnLicenseValidated(_licenseField.text, licenseResponse.environment.ToEnum<ELicenseEnvironment>());
+            }
+            catch (NetworkUnreachableException)
+            {
+                if (Utils.IsWithinOfflineGracePeriod(_licenseField.text))
+                    OnLicenseValidated(_licenseField.text, PlayerPrefs.GetString(Constants.LAST_VALIDATION_ENVIRONMENT_KEY).ToEnum<ELicenseEnvironment>());
+                else
+                    _errorText.text = "No internet connection and license is not within the offline grace period. Please connect to the internet!";
             }
             catch (Exception ex)
             {

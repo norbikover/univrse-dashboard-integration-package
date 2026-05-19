@@ -3,6 +3,7 @@ using TMPro;
 using System;
 using UnityEngine.UI;
 using HttpIntegration;
+using Mirror;
 
 namespace UniVRseDashboardIntegration
 {
@@ -55,27 +56,6 @@ namespace UniVRseDashboardIntegration
         {
             if (_isCheckingLicense) return;
 
-            // If offline check for grace period.
-            if(Application.internetReachability == NetworkReachability.NotReachable)
-            {
-                if(Utils.IsWithinOfflineGracePeriod(_currentLicense))
-                {
-                    // In case of success, automatically recheck the license again after the given delay.
-                    SetPopupState(false);                   
-                    CancelInvoke(nameof(ValidateLicense));
-                    Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
-                    if (_debugLog) Debug.Log($"License OFFLINE validation successful. Rechecking after {_licenseRepeatingInterval}s interval.");
-                }
-                else
-                {
-                    _errorText.text = "No internet connection and offline grace period has expired. Please connect to the internet!";
-                    SetPopupState(true);
-                    CancelInvoke(nameof(ValidateLicense));
-                }
-
-                return;
-            }
-
             _isCheckingLicense = true;
             _errorText.text = "";
 
@@ -96,6 +76,23 @@ namespace UniVRseDashboardIntegration
                 CancelInvoke(nameof(ValidateLicense));
                 Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
                 if (_debugLog) Debug.Log($"License validation successful. Rechecking after {_licenseRepeatingInterval}s interval.");
+            }
+            catch (NetworkUnreachableException)
+            {
+                if(Utils.IsWithinOfflineGracePeriod(_currentLicense))
+                {
+                    // In case of success, automatically recheck the license again after the given delay.
+                    SetPopupState(false);                   
+                    CancelInvoke(nameof(ValidateLicense));
+                    Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
+                    if (_debugLog) Debug.Log($"License OFFLINE validation successful. Rechecking after {_licenseRepeatingInterval}s interval.");
+                }
+                else
+                {
+                    _errorText.text = "No internet connection and offline grace period has expired. Please connect to the internet!";
+                    SetPopupState(true);
+                    CancelInvoke(nameof(ValidateLicense));
+                }
             }
             catch (Exception ex) // In case of an error.
             {
