@@ -3,7 +3,6 @@ using TMPro;
 using System;
 using UnityEngine.UI;
 using HttpIntegration;
-using Mirror;
 
 namespace UniVRseDashboardIntegration
 {
@@ -77,7 +76,7 @@ namespace UniVRseDashboardIntegration
                 Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
                 if (_debugLog) Debug.Log($"License validation successful. Rechecking after {_licenseRepeatingInterval}s interval.");
             }
-            catch (NetworkUnreachableException)
+            catch (Exception ex) // In case of an error.
             {
                 if(Utils.IsWithinOfflineGracePeriod(_currentLicense))
                 {
@@ -89,16 +88,10 @@ namespace UniVRseDashboardIntegration
                 }
                 else
                 {
-                    _errorText.text = "No internet connection and offline grace period has expired. Please connect to the internet!";
+                    _errorText.text = $"Error: {ex.Message}. License is not within offline grace period. Please connect to the internet!";
                     SetPopupState(true);
                     CancelInvoke(nameof(ValidateLicense));
                 }
-            }
-            catch (Exception ex) // In case of an error.
-            {
-                _errorText.text = ex.Message;
-                SetPopupState(true);
-                CancelInvoke(nameof(ValidateLicense));
             }
 
             _isCheckingLicense = false;
