@@ -11,7 +11,7 @@ namespace UniVRseDashboardIntegration
     {
         #region Singleton Pattern
         private static AnalyticsEntryManager _instance;
-        public static AnalyticsEntryManager Instance => _instance != null ? _instance : _instance = FindAnyObjectByType<AnalyticsEntryManager>();
+        public static AnalyticsEntryManager Instance => _instance != null ? _instance : (_instance = FindAnyObjectByType<AnalyticsEntryManager>());
         #endregion
 
         [Header("Settings")]
@@ -30,13 +30,11 @@ namespace UniVRseDashboardIntegration
         // We will then map that mongoID with the user's device id.
         // If a client sends a new entry we can now match the given device id to the mongo entry id and update the entry instead of pushing a new one.
         // Because we are using deviceID, the server will remove the deviceID from the Dictionary whenever a client joins the game. This is not needed when clients reconnect cause local data is preserved so we actually want to use PUT in that case.
-        private Dictionary<string, string> _entriesIDS = new Dictionary<string, string>();
-        private DateTime _startTime;
+        private Dictionary<string, string> _cloudEntryDeviceIdMappings = new Dictionary<string, string>();
+        private Dictionary<string, string> _offlineEntryDeviceIdMappings = new Dictionary<string, string>(); // This is used to prevent the same device overwriting the same local document in case client connects again but server stays open.
 
         private void Start()
         {
-            _startTime = DateTime.Now;
-
             if (_localToCloudPushInterval > 0)
             {
                 CancelInvoke(nameof(PushLocalDocumentsToCloudRepeating));
@@ -50,7 +48,7 @@ namespace UniVRseDashboardIntegration
             string deviceName = DeviceMappingSystem.Instance.GetDeviceName(deviceId);
 
             // If the client has sent another entry before it should have a mapping in the dictionary such that we can update the existing entry from the database instead of pusing a new one.
-            string senderEntryID = _entriesIDS.ContainsKey(deviceId) ? _entriesIDS[deviceId] : string.Empty;
+            string senderEntryID = _cloudEntryDeviceIdMappings.ContainsKey(deviceId) ? _cloudEntryDeviceIdMappings[deviceId] : string.Empty;
 
             if (this._debugLog) Debug.Log($"Received Analytics Entry data from a client.\nDevice ID: {deviceId}, Total Time: {totalTime} Update Existing Entry: {!string.IsNullOrEmpty(senderEntryID)}.");
 
@@ -83,7 +81,7 @@ namespace UniVRseDashboardIntegration
                 string entryCloudID = response.Trim('"');
 
                 // Create a mapping between the sender's device ID and the entry ID received from the backend.
-                _entriesIDS[deviceId] = entryCloudID;
+                _cloudEntryDeviceIdMappings[deviceId] = entryCloudID;
 
                 // Store the entry locally on success.
                 if (_storeSuccessDocumentsLocally) OfflineDatabaseManager.Instance.AddDocumentToCollection(analyticsEntry, entryCloudID, _successEntriesCollectionName);
@@ -96,7 +94,11 @@ namespace UniVRseDashboardIntegration
                 // If there's an error, store the entry locally.
                 if (_storeErrorDocumentsLocally)
                 {
-                    string documentName = string.IsNullOrEmpty(senderEntryID) ? $"{_startTime.ToLongString()}({deviceId})" : senderEntryID;
+                    // Create a mapping between the sender's deviceId and a local entry id.
+                    if(!_offlineEntryDeviceIdMappings.ContainsKey(deviceId)) 
+                        _offlineEntryDeviceIdMappings[deviceId] = Guid.NewGuid().ToString();
+
+                    string documentName = string.IsNullOrEmpty(senderEntryID) ? $"{deviceId}:{_offlineEntryDeviceIdMappings[deviceId]}" : senderEntryID;
                     OfflineDatabaseManager.Instance.AddDocumentToCollection(analyticsEntry, documentName, _errorEntriesCollectionName);
                 }
             }
@@ -142,7 +144,8 @@ namespace UniVRseDashboardIntegration
 
         public void ResetEntryID(string senderDeviceId) // This is used when the same network entity should send a new entry to the cloud database instead of updating an already existing entry. 
         {
-            _entriesIDS.Remove(senderDeviceId);
+            _cloudEntryDeviceIdMappings.Remove(senderDeviceId);
+            _offlineEntryDeviceIdMappings.Remove(senderDeviceId);
         }
     }
 }
