@@ -98,7 +98,7 @@ namespace UniVRseDashboardIntegration
                     if(!_offlineEntryDeviceIdMappings.ContainsKey(deviceId)) 
                         _offlineEntryDeviceIdMappings[deviceId] = Guid.NewGuid().ToString();
 
-                    string documentName = string.IsNullOrEmpty(senderEntryID) ? $"{deviceId}:{_offlineEntryDeviceIdMappings[deviceId]}" : senderEntryID;
+                    string documentName = string.IsNullOrEmpty(senderEntryID) ? $"{deviceId}_{_offlineEntryDeviceIdMappings[deviceId]}" : senderEntryID;
                     OfflineDatabaseManager.Instance.AddDocumentToCollection(analyticsEntry, documentName, _errorEntriesCollectionName);
                 }
             }
