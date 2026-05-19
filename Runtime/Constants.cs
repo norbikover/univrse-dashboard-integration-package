@@ -32,7 +32,7 @@ namespace UniVRseDashboardIntegration
         public static string LICENSE_CODE_KEY {get {return Instance._licenseCodeKey;}}
         public static string LAST_VALIDATION_TIME_KEY {get {return Instance._lastValidationTimeKey;}}
         public static string LAST_VALIDATION_ENVIRONMENT_KEY {get {return Instance._lastValidationEnvironmentKey;}}
-        public static int OFFLINE_GRACE_PERIOD_DAYS {get {return Instance._offlineGracePeriodDays;}}
+        public static float OFFLINE_GRACE_PERIOD_DAYS {get {return Instance._offlineGracePeriodDays;}}
         public static string SECRET_LICENSE {get {return Instance._secretLicense;}}
         #endregion
     }

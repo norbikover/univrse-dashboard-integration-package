@@ -20,7 +20,7 @@ namespace UniVRseDashboardIntegration
                 return false;
 
             TimeSpan timeSinceValidation = DateTime.UtcNow - lastValidation;
-            int gracePeriodDays = Constants.OFFLINE_GRACE_PERIOD_DAYS;
+            float gracePeriodDays = Constants.OFFLINE_GRACE_PERIOD_DAYS;
 
             return timeSinceValidation.TotalDays < gracePeriodDays;
         }
