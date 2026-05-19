@@ -125,7 +125,7 @@ namespace UniVRseDashboardIntegration
             });
 
             // Start the background license validation process.
-            LicenseBackgroundValidator.Instance.StartBackgroundLicenseChecking(_licenseField.text);
+            LicenseBackgroundValidator.Instance.StartBackgroundLicenseChecking(license);
 
             _loadingScene = true;
             SceneManager.LoadSceneAsync(_sceneToLoad);
