@@ -22,6 +22,9 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private float _licenseRepeatingInterval = 120f;
         [SerializeField] private float _quitTimeDelay = 60f;
 
+        [Header("Debug")]
+        [SerializeField] private bool _debugLog = false;
+
         // Private variables.
         private bool _popupEnabled = false;
         private bool _isCheckingLicense = false;
@@ -58,9 +61,10 @@ namespace UniVRseDashboardIntegration
                 if(Utils.IsWithinOfflineGracePeriod(_currentLicense))
                 {
                     // In case of success, automatically recheck the license again after the given delay.
-                    SetPopupState(false);
+                    SetPopupState(false);                   
                     CancelInvoke(nameof(ValidateLicense));
                     Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
+                    if (_debugLog) Debug.Log("License validation successful. Rechecking after interval.");
                 }
                 else
                 {
@@ -91,6 +95,7 @@ namespace UniVRseDashboardIntegration
                 SetPopupState(false);
                 CancelInvoke(nameof(ValidateLicense));
                 Invoke(nameof(ValidateLicense), _licenseRepeatingInterval);
+                if (_debugLog) Debug.Log("License validation successful. Rechecking after interval.");
             }
             catch (Exception ex) // In case of an error.
             {
