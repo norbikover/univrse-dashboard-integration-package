@@ -20,7 +20,7 @@ namespace UniVRseDashboardIntegration
         [SerializeField] private string _lastValidationEnvironmentKey = "LICENSE_LAST_ENVIRONMENT";
 
         [Header("Offline Grace Period")]
-        [SerializeField] private int _offlineGracePeriodDays = 3;
+        [SerializeField] private float _offlineGracePeriodDays = 3;
 
         [Header("Secrets")]
         [SerializeField] private string _secretLicense = "xr123!";
