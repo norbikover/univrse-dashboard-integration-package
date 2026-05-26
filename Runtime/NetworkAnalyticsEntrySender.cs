@@ -25,7 +25,7 @@ namespace UniVRseDashboardIntegration
         [SerializeField, ShowIf("_stopWhenInactive")] private Transform _xrCamera;
         [SerializeField, ShowIf("_stopWhenInactive")] private float _positionThreshold = 0.01f;
         [SerializeField, ShowIf("_stopWhenInactive")] private float _rotationThreshold = 1f;
-        [SerializeField, ShowIf("_stopWhenInactive")] private float _inactivityWindowDuration = 300f; // 5 minutes
+        [SerializeField, ShowIf("_stopWhenInactive")] private float _inactivityWindowDuration = 120f; // 2 minutes
 
         [Header("Debug")]
         [SerializeField] protected bool DebugLog = true;
@@ -42,7 +42,7 @@ namespace UniVRseDashboardIntegration
         private Quaternion _lastCameraRotation = Quaternion.identity;
 
         // Helpers.
-        protected bool StopWhenInactive => _stopWhenInactive && !Application.isEditor; // Editor will never count inactivity.
+        protected bool StopWhenInactive => _stopWhenInactive && Utilities.PlatformChecks.IsStandaloneVRBuild();
         protected bool IsSessionInactive => this.StopWhenInactive && _inactivityTimer >= _inactivityWindowDuration;
 
         /// <summary>
