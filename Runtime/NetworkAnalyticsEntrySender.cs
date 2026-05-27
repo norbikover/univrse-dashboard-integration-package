@@ -88,6 +88,7 @@ namespace UniVRseDashboardIntegration
             }
 
             _cachedServerStartTime = NetworkGlobalTimer.Instance.ServerStartTime;
+            _inactivityTimer = 0f;
 
             // Send an initial entry to the server.
             if(_sendOnStartClient) SendAnalyticsEntryToServer();
@@ -153,9 +154,6 @@ namespace UniVRseDashboardIntegration
         {
             // Reset the total time.
             this.TotalTime = 0f;
-
-            // Reset activity tracking.
-            _inactivityTimer = 0f;
         }
         
         [Client]
