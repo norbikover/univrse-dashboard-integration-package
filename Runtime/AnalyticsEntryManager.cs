@@ -31,10 +31,10 @@ namespace UniVRseDashboardIntegration
         private Dictionary<string, AnalyticsEntry> _entries = new Dictionary<string, AnalyticsEntry>(); // Used to prevent overwriting the {createdAt} field.
         
         // 4 CASES:
-        // FULL INTERNET (push directly to cloud)
-        // FULL OFFLINE (store entries locally, push to cloud later)
-        // ONLINE -> OFFLINE (store cloudEntryId in documentName locally and we can update the same entry in the cloud when we have internet again ... we don't want to push a new entry)
-        // OFFLINE -> ONLINE (tricky as we might push both offline data and then new online data as 2 entries)
+        // 1. FULL INTERNET (push directly to cloud)
+        // 2. FULL OFFLINE (store entries locally, push to cloud later)
+        // 3. ONLINE -> OFFLINE (store cloudEntryId in documentName locally and we can update the same entry in the cloud when we have internet again ... we don't want to push a new entry)
+        // 4. OFFLINE -> ONLINE (tricky as we might push both offline data and then new online data as 2 entries)
         // a. if online pushes first (with latest data) we don't want to push outdated offline too -> remove the offline document and mapping
         // b. if offline pushes first, we want the online to overwrite the same entry -> create a mapping between device and cloud entry ID and remove offline mapping BUT only if offline was created during this session.
         
@@ -52,11 +52,8 @@ namespace UniVRseDashboardIntegration
             // Store the device name (if any).
             string deviceName = DeviceMappingSystem.Instance.GetDeviceName(deviceId);
 
-            // If the client has sent another entry before it should have a mapping in the dictionary such that we can update the existing entry from the database instead of pusing a new one.
-            string cloudEntryID = _cloudDeviceEntryMap.ContainsKey(deviceId) ? _cloudDeviceEntryMap[deviceId] : string.Empty;
-
-            if (this._debugLog) Debug.Log($"Received Analytics Entry data from a client.\nDevice ID: {deviceId}, Total Time: {totalTime} Updating Existing Cloud Entry: {!string.IsNullOrEmpty(cloudEntryID)}.");
-
+            if (this._debugLog) Debug.Log($"Received Analytics Entry data from a client.\nDevice ID: {deviceId}, Device Name: {deviceName}, Total Time: {totalTime}.");
+            
             // Return in case no license code was previously provided (most probably DEV build).
             if (string.IsNullOrEmpty(LicenseStaticReferences.LicenseCode))
             {
@@ -93,16 +90,19 @@ namespace UniVRseDashboardIntegration
 
             try
             {
+                bool usePUT = _cloudDeviceEntryMap.ContainsKey(deviceId);
+                if(_debugLog) Debug.Log($"Try to update existing cloud entry: {usePUT}");
+
                 string response = await HttpService.Instance.SendRequestAsync(
-                    postfix: string.IsNullOrEmpty(cloudEntryID) ? _apiPostfix : Path.Combine(_apiPostfix, cloudEntryID),
-                    method: string.IsNullOrEmpty(cloudEntryID) ? HttpMethod.POST : HttpMethod.PUT,
+                    postfix: !usePUT ? _apiPostfix : Path.Combine(_apiPostfix, _cloudDeviceEntryMap[deviceId]),
+                    method: !usePUT ? HttpMethod.POST : HttpMethod.PUT,
                     data: analyticsEntry,
                     serverUrl: Constants.API_ENDPOINT);
 
                 if(_debugLog) Debug.Log($"Entry sent successfully to the cloud: {response}");
 
                 // Update cloud entry ID.
-                cloudEntryID = response.Trim('"');
+                string cloudEntryID = response.Trim('"');
 
                 // Create a mapping between the device ID and the cloud entry ID received from the backend.
                 if(!_cloudDeviceEntryMap.ContainsKey(deviceId))
@@ -130,13 +130,18 @@ namespace UniVRseDashboardIntegration
                 // If there's an error, store the entry locally.
                 if (_storeErrorDocumentsLocally)
                 {
-                    // Create a mapping between the device ID and a local entry id.
-                    if(!_offlineDeviceEntryMap.ContainsKey(deviceId)) 
-                        _offlineDeviceEntryMap[deviceId] = Guid.NewGuid().ToString();
+                    string documentName = string.Empty;
 
-                    string documentName = string.IsNullOrEmpty(cloudEntryID) ? 
-                                            $"{deviceId}_{cloudEntryID}" :
-                                            $"{deviceId}_{_offlineDeviceEntryMap[deviceId]}"; 
+                    // If there is a stored cloud entry id we can use it in the document name such that the offline can later update the same entry in the cloud.
+                    if(_cloudDeviceEntryMap.ContainsKey(deviceId))
+                        documentName = $"{deviceId}_{_cloudDeviceEntryMap[deviceId]}";
+                    else // Otherwise make sure to create an offline mapping for the deviceId such that we can locally push to the same entry.
+                    {
+                        if(!_offlineDeviceEntryMap.ContainsKey(deviceId)) 
+                            _offlineDeviceEntryMap[deviceId] = Guid.NewGuid().ToString();
+
+                        documentName = $"{deviceId}_{_offlineDeviceEntryMap[deviceId]}"; 
+                    }
                     
                     OfflineDatabaseManager.Instance.AddDocumentToCollection(analyticsEntry, documentName, _errorEntriesCollectionName);
                     
