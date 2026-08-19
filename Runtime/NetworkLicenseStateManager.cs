@@ -3,17 +3,18 @@ using Mirror;
 
 namespace UniVRseDashboardIntegration
 {
-    public class NetworkLicenseDemoCanvasStateManager : NetworkBehaviour
+    public class NetworkLicenseStateManager : NetworkBehaviour
     {
         [Header("References")]
-        [SerializeField] private GameObject _canvas;
+        [SerializeField] private GameObject _demoCanvas;
 
         // SyncVars.
         [SyncVar(hook = nameof(OnLicenseEnvironmentChanged))] private ELicenseEnvironment _licenseEnvironment;
 
         private void OnLicenseEnvironmentChanged(ELicenseEnvironment oldValue, ELicenseEnvironment newValue) // Called on both clients (hook) and serverOnly (manually).
         {
-            _canvas.SetActive(_licenseEnvironment == ELicenseEnvironment.DEMO);
+            LicenseStaticReferences.LicenseEnvironment = _licenseEnvironment; // Update static reference.
+            if(_demoCanvas != null) _demoCanvas.SetActive(_licenseEnvironment == ELicenseEnvironment.DEMO);
         }
 
         public override void OnStartServer()
